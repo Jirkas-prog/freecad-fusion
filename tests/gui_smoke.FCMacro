@@ -1,0 +1,55 @@
+"""Isolated GUI smoke test. Run through tools/test_gui.ps1, never on a user model."""
+import os, sys, json, traceback
+from pathlib import Path
+assert os.environ.get('FUSIONFLOW_GUI_TEST') == '1'
+ROOT = Path(os.environ['FUSIONFLOW_SOURCE'])
+OUT = Path(os.environ['FUSIONFLOW_TEST_OUTPUT'])
+OUT.mkdir(parents=True, exist_ok=True)
+import FreeCAD as A, FreeCADGui as G, Part, Sketcher
+from PySide import QtCore as C, QtWidgets as W
+from PySide6 import QtTest
+
+def run():
+    result={}
+    try:
+        import fusionflow_ui as ui, fusionflow_icons as icons
+        import fusionflow_core as core
+        main=G.getMainWindow()
+        main.setAttribute(C.Qt.WA_DontShowOnScreen,True)
+        main.resize(1440,920)
+        G.activateWorkbench('PartDesignWorkbench')
+        assert ui._installed, 'Addon did not start automatically on a fresh profile'
+        assert A.ParamGet('User parameter:BaseApp/Preferences/Mod/FusionFlow').GetBool('Configured')
+        missing=[name for name in icons.MANIFEST if icons.icon(name).isNull()]
+        assert not missing, missing
+        d=A.newDocument('FusionFlow_demo');d.Label='FusionFlow demo';d.UndoMode=1
+        s=d.addObject('Sketcher::SketchObject','BaseSketch')
+        points=[(0,0),(60,0),(60,40),(0,40),(0,0)]
+        for a,b in zip(points,points[1:]):
+            s.addGeometry(Part.LineSegment(A.Vector(a[0],a[1],0),A.Vector(b[0],b[1],0)),False)
+        s.MakeInternals=True;d.recompute()
+        p=core.extrude(s,[1],length=12);p.Label='Extrude base'
+        b=core.body_of(p)
+        ring=d.addObject('Sketcher::SketchObject','HoleSketch')
+        ring.Placement.Base=A.Vector(30,20,0)
+        ring.addGeometry(Part.Circle(A.Vector(),A.Vector(0,0,1),10),False)
+        ring.MakeInternals=True;d.recompute()
+        cut=core.extrude(ring,[1],'Cut',b,length=12);cut.Label='Through hole'
+        d.recompute()
+        assert cut.Shape.isValid() and len(cut.Shape.Solids)==1
+        s.Visibility=False;ring.Visibility=False;p.Visibility=False;cut.Visibility=True
+        G.activeDocument().activeView().viewAxonometric();G.activeDocument().activeView().fitAll()
+        QtTest.QTest.qWait(1000)
+        assert ui._timeline and ui._timeline.isVisible(), 'Timeline is missing'
+        result={'passed':True,'freecad':'.'.join(A.Version()[:3]),'qt':C.qVersion(),
+                'icons':len(icons.MANIFEST),'volume':cut.Shape.Volume,
+                'startup':True,'timeline':True}
+        main.grab().save(str(OUT/'preview.png'))
+        for doc in list(A.listDocuments()):A.closeDocument(doc)
+    except Exception:
+        result={'passed':False,'error':traceback.format_exc()}
+    (OUT/'gui.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
+    C.QTimer.singleShot(0,W.QApplication.instance().quit)
+
+G.getMainWindow().setAttribute(C.Qt.WA_DontShowOnScreen,True)
+C.QTimer.singleShot(7000,run)

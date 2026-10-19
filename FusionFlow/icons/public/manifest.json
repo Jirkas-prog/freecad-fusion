@@ -1,0 +1,822 @@
+{
+  "origin": "Original FusionFlow vector artwork",
+  "license": "LGPL-2.1-or-later",
+  "icons": {
+    "appearance": {
+      "16": {
+        "file": "appearance.svg"
+      },
+      "32": {
+        "file": "appearance.svg"
+      }
+    },
+    "arc": {
+      "16": {
+        "file": "arc.svg"
+      },
+      "32": {
+        "file": "arc.svg"
+      }
+    },
+    "arc3": {
+      "16": {
+        "file": "arc3.svg"
+      },
+      "32": {
+        "file": "arc3.svg"
+      }
+    },
+    "arc_center": {
+      "16": {
+        "file": "arc_center.svg"
+      },
+      "32": {
+        "file": "arc_center.svg"
+      }
+    },
+    "arc_slot": {
+      "16": {
+        "file": "arc_slot.svg"
+      },
+      "32": {
+        "file": "arc_slot.svg"
+      }
+    },
+    "arc_slot_flat": {
+      "16": {
+        "file": "arc_slot_flat.svg"
+      },
+      "32": {
+        "file": "arc_slot_flat.svg"
+      }
+    },
+    "assemble": {
+      "16": {
+        "file": "assemble.svg"
+      },
+      "32": {
+        "file": "assemble.svg"
+      }
+    },
+    "axis": {
+      "16": {
+        "file": "axis.svg"
+      },
+      "32": {
+        "file": "axis.svg"
+      }
+    },
+    "body": {
+      "16": {
+        "file": "body.svg"
+      },
+      "32": {
+        "file": "body.svg"
+      }
+    },
+    "boolean_cut": {
+      "16": {
+        "file": "boolean_cut.svg"
+      },
+      "32": {
+        "file": "boolean_cut.svg"
+      }
+    },
+    "boolean_intersect": {
+      "16": {
+        "file": "boolean_intersect.svg"
+      },
+      "32": {
+        "file": "boolean_intersect.svg"
+      }
+    },
+    "boolean_join": {
+      "16": {
+        "file": "boolean_join.svg"
+      },
+      "32": {
+        "file": "boolean_join.svg"
+      }
+    },
+    "box": {
+      "16": {
+        "file": "box.svg"
+      },
+      "32": {
+        "file": "box.svg"
+      }
+    },
+    "browser-chevron-down": {
+      "16": {
+        "file": "browser-chevron-down.svg"
+      },
+      "32": {
+        "file": "browser-chevron-down.svg"
+      }
+    },
+    "browser-chevron-right": {
+      "16": {
+        "file": "browser-chevron-right.svg"
+      },
+      "32": {
+        "file": "browser-chevron-right.svg"
+      }
+    },
+    "center_rectangle": {
+      "16": {
+        "file": "center_rectangle.svg"
+      },
+      "32": {
+        "file": "center_rectangle.svg"
+      }
+    },
+    "chamfer": {
+      "16": {
+        "file": "chamfer.svg"
+      },
+      "32": {
+        "file": "chamfer.svg"
+      }
+    },
+    "circle": {
+      "16": {
+        "file": "circle.svg"
+      },
+      "32": {
+        "file": "circle.svg"
+      }
+    },
+    "circle3": {
+      "16": {
+        "file": "circle3.svg"
+      },
+      "32": {
+        "file": "circle3.svg"
+      }
+    },
+    "circular_pattern": {
+      "16": {
+        "file": "circular_pattern.svg"
+      },
+      "32": {
+        "file": "circular_pattern.svg"
+      }
+    },
+    "combine": {
+      "16": {
+        "file": "combine.svg"
+      },
+      "32": {
+        "file": "combine.svg"
+      }
+    },
+    "component": {
+      "16": {
+        "file": "component.svg"
+      },
+      "32": {
+        "file": "component.svg"
+      }
+    },
+    "configure": {
+      "16": {
+        "file": "configure.svg"
+      },
+      "32": {
+        "file": "configure.svg"
+      }
+    },
+    "constraint_coincident": {
+      "16": {
+        "file": "constraint_coincident.svg"
+      },
+      "32": {
+        "file": "constraint_coincident.svg"
+      }
+    },
+    "constraint_equal": {
+      "16": {
+        "file": "constraint_equal.svg"
+      },
+      "32": {
+        "file": "constraint_equal.svg"
+      }
+    },
+    "constraint_fix": {
+      "16": {
+        "file": "constraint_fix.svg"
+      },
+      "32": {
+        "file": "constraint_fix.svg"
+      }
+    },
+    "constraint_parallel": {
+      "16": {
+        "file": "constraint_parallel.svg"
+      },
+      "32": {
+        "file": "constraint_parallel.svg"
+      }
+    },
+    "constraint_perpendicular": {
+      "16": {
+        "file": "constraint_perpendicular.svg"
+      },
+      "32": {
+        "file": "constraint_perpendicular.svg"
+      }
+    },
+    "constraint_symmetry": {
+      "16": {
+        "file": "constraint_symmetry.svg"
+      },
+      "32": {
+        "file": "constraint_symmetry.svg"
+      }
+    },
+    "constraint_tangent": {
+      "16": {
+        "file": "constraint_tangent.svg"
+      },
+      "32": {
+        "file": "constraint_tangent.svg"
+      }
+    },
+    "constraints": {
+      "16": {
+        "file": "constraints.svg"
+      },
+      "32": {
+        "file": "constraints.svg"
+      }
+    },
+    "construct": {
+      "16": {
+        "file": "construct.svg"
+      },
+      "32": {
+        "file": "construct.svg"
+      }
+    },
+    "construction": {
+      "16": {
+        "file": "construction.svg"
+      },
+      "32": {
+        "file": "construction.svg"
+      }
+    },
+    "coordinates": {
+      "16": {
+        "file": "coordinates.svg"
+      },
+      "32": {
+        "file": "coordinates.svg"
+      }
+    },
+    "dimension": {
+      "16": {
+        "file": "dimension.svg"
+      },
+      "32": {
+        "file": "dimension.svg"
+      }
+    },
+    "draft": {
+      "16": {
+        "file": "draft.svg"
+      },
+      "32": {
+        "file": "draft.svg"
+      }
+    },
+    "ellipse": {
+      "16": {
+        "file": "ellipse.svg"
+      },
+      "32": {
+        "file": "ellipse.svg"
+      }
+    },
+    "extend": {
+      "16": {
+        "file": "extend.svg"
+      },
+      "32": {
+        "file": "extend.svg"
+      }
+    },
+    "extrude": {
+      "16": {
+        "file": "extrude.svg"
+      },
+      "32": {
+        "file": "extrude.svg"
+      }
+    },
+    "eye": {
+      "16": {
+        "file": "eye.svg"
+      },
+      "32": {
+        "file": "eye.svg"
+      }
+    },
+    "eye_off": {
+      "16": {
+        "file": "eye_off.svg"
+      },
+      "32": {
+        "file": "eye_off.svg"
+      }
+    },
+    "fillet": {
+      "16": {
+        "file": "fillet.svg"
+      },
+      "32": {
+        "file": "fillet.svg"
+      }
+    },
+    "finish": {
+      "16": {
+        "file": "finish.svg"
+      },
+      "32": {
+        "file": "finish.svg"
+      }
+    },
+    "folder": {
+      "16": {
+        "file": "folder.svg"
+      },
+      "32": {
+        "file": "folder.svg"
+      }
+    },
+    "helix": {
+      "16": {
+        "file": "helix.svg"
+      },
+      "32": {
+        "file": "helix.svg"
+      }
+    },
+    "history": {
+      "16": {
+        "file": "history.svg"
+      },
+      "32": {
+        "file": "history.svg"
+      }
+    },
+    "history_end": {
+      "16": {
+        "file": "history_end.svg"
+      },
+      "32": {
+        "file": "history_end.svg"
+      }
+    },
+    "history_first": {
+      "16": {
+        "file": "history_first.svg"
+      },
+      "32": {
+        "file": "history_first.svg"
+      }
+    },
+    "history_next": {
+      "16": {
+        "file": "history_next.svg"
+      },
+      "32": {
+        "file": "history_next.svg"
+      }
+    },
+    "history_previous": {
+      "16": {
+        "file": "history_previous.svg"
+      },
+      "32": {
+        "file": "history_previous.svg"
+      }
+    },
+    "hole": {
+      "16": {
+        "file": "hole.svg"
+      },
+      "32": {
+        "file": "hole.svg"
+      }
+    },
+    "image": {
+      "16": {
+        "file": "image.svg"
+      },
+      "32": {
+        "file": "image.svg"
+      }
+    },
+    "insert": {
+      "16": {
+        "file": "insert.svg"
+      },
+      "32": {
+        "file": "insert.svg"
+      }
+    },
+    "inspect": {
+      "16": {
+        "file": "inspect.svg"
+      },
+      "32": {
+        "file": "inspect.svg"
+      }
+    },
+    "line": {
+      "16": {
+        "file": "line.svg"
+      },
+      "32": {
+        "file": "line.svg"
+      }
+    },
+    "line_angle": {
+      "16": {
+        "file": "line_angle.svg"
+      },
+      "32": {
+        "file": "line_angle.svg"
+      }
+    },
+    "line_points": {
+      "16": {
+        "file": "line_points.svg"
+      },
+      "32": {
+        "file": "line_points.svg"
+      }
+    },
+    "line_xy": {
+      "16": {
+        "file": "line_xy.svg"
+      },
+      "32": {
+        "file": "line_xy.svg"
+      }
+    },
+    "loft": {
+      "16": {
+        "file": "loft.svg"
+      },
+      "32": {
+        "file": "loft.svg"
+      }
+    },
+    "mesh": {
+      "16": {
+        "file": "mesh.svg"
+      },
+      "32": {
+        "file": "mesh.svg"
+      }
+    },
+    "mirror": {
+      "16": {
+        "file": "mirror.svg"
+      },
+      "32": {
+        "file": "mirror.svg"
+      }
+    },
+    "more": {
+      "16": {
+        "file": "more.svg"
+      },
+      "32": {
+        "file": "more.svg"
+      }
+    },
+    "move": {
+      "16": {
+        "file": "move.svg"
+      },
+      "32": {
+        "file": "move.svg"
+      }
+    },
+    "new_body": {
+      "16": {
+        "file": "new_body.svg"
+      },
+      "32": {
+        "file": "new_body.svg"
+      }
+    },
+    "offset": {
+      "16": {
+        "file": "offset.svg"
+      },
+      "32": {
+        "file": "offset.svg"
+      }
+    },
+    "open": {
+      "16": {
+        "file": "open.svg"
+      },
+      "32": {
+        "file": "open.svg"
+      }
+    },
+    "origin": {
+      "16": {
+        "file": "origin.svg"
+      },
+      "32": {
+        "file": "origin.svg"
+      }
+    },
+    "parameters": {
+      "16": {
+        "file": "parameters.svg"
+      },
+      "32": {
+        "file": "parameters.svg"
+      }
+    },
+    "pattern": {
+      "16": {
+        "file": "pattern.svg"
+      },
+      "32": {
+        "file": "pattern.svg"
+      }
+    },
+    "point": {
+      "16": {
+        "file": "point.svg"
+      },
+      "32": {
+        "file": "point.svg"
+      }
+    },
+    "polygon": {
+      "16": {
+        "file": "polygon.svg"
+      },
+      "32": {
+        "file": "polygon.svg"
+      }
+    },
+    "polyline": {
+      "16": {
+        "file": "polyline.svg"
+      },
+      "32": {
+        "file": "polyline.svg"
+      }
+    },
+    "presspull": {
+      "16": {
+        "file": "presspull.svg"
+      },
+      "32": {
+        "file": "presspull.svg"
+      }
+    },
+    "project": {
+      "16": {
+        "file": "project.svg"
+      },
+      "32": {
+        "file": "project.svg"
+      }
+    },
+    "rectangle": {
+      "16": {
+        "file": "rectangle.svg"
+      },
+      "32": {
+        "file": "rectangle.svg"
+      }
+    },
+    "rectangle3": {
+      "16": {
+        "file": "rectangle3.svg"
+      },
+      "32": {
+        "file": "rectangle3.svg"
+      }
+    },
+    "redo": {
+      "16": {
+        "file": "redo.svg"
+      },
+      "32": {
+        "file": "redo.svg"
+      }
+    },
+    "revolve": {
+      "16": {
+        "file": "revolve.svg"
+      },
+      "32": {
+        "file": "revolve.svg"
+      }
+    },
+    "save": {
+      "16": {
+        "file": "save.svg"
+      },
+      "32": {
+        "file": "save.svg"
+      }
+    },
+    "scale": {
+      "16": {
+        "file": "scale.svg"
+      },
+      "32": {
+        "file": "scale.svg"
+      }
+    },
+    "search": {
+      "16": {
+        "file": "search.svg"
+      },
+      "32": {
+        "file": "search.svg"
+      }
+    },
+    "section": {
+      "16": {
+        "file": "section.svg"
+      },
+      "32": {
+        "file": "section.svg"
+      }
+    },
+    "select": {
+      "16": {
+        "file": "select.svg"
+      },
+      "32": {
+        "file": "select.svg"
+      }
+    },
+    "shell": {
+      "16": {
+        "file": "shell.svg"
+      },
+      "32": {
+        "file": "shell.svg"
+      }
+    },
+    "sketch": {
+      "16": {
+        "file": "sketch.svg"
+      },
+      "32": {
+        "file": "sketch.svg"
+      }
+    },
+    "sketch_check": {
+      "16": {
+        "file": "sketch_check.svg"
+      },
+      "32": {
+        "file": "sketch_check.svg"
+      }
+    },
+    "sketch_feature": {
+      "16": {
+        "file": "sketch_feature.svg"
+      },
+      "32": {
+        "file": "sketch_feature.svg"
+      }
+    },
+    "sketch_move": {
+      "16": {
+        "file": "sketch_move.svg"
+      },
+      "32": {
+        "file": "sketch_move.svg"
+      }
+    },
+    "slot": {
+      "16": {
+        "file": "slot.svg"
+      },
+      "32": {
+        "file": "slot.svg"
+      }
+    },
+    "spline": {
+      "16": {
+        "file": "spline.svg"
+      },
+      "32": {
+        "file": "spline.svg"
+      }
+    },
+    "split": {
+      "16": {
+        "file": "split.svg"
+      },
+      "32": {
+        "file": "split.svg"
+      }
+    },
+    "status_error": {
+      "16": {
+        "file": "status_error.svg"
+      },
+      "32": {
+        "file": "status_error.svg"
+      }
+    },
+    "status_warning": {
+      "16": {
+        "file": "status_warning.svg"
+      },
+      "32": {
+        "file": "status_warning.svg"
+      }
+    },
+    "surface": {
+      "16": {
+        "file": "surface.svg"
+      },
+      "32": {
+        "file": "surface.svg"
+      }
+    },
+    "sweep": {
+      "16": {
+        "file": "sweep.svg"
+      },
+      "32": {
+        "file": "sweep.svg"
+      }
+    },
+    "trim": {
+      "16": {
+        "file": "trim.svg"
+      },
+      "32": {
+        "file": "trim.svg"
+      }
+    },
+    "undo": {
+      "16": {
+        "file": "undo.svg"
+      },
+      "32": {
+        "file": "undo.svg"
+      }
+    },
+    "view_display": {
+      "16": {
+        "file": "view_display.svg"
+      },
+      "32": {
+        "file": "view_display.svg"
+      }
+    },
+    "view_fit": {
+      "16": {
+        "file": "view_fit.svg"
+      },
+      "32": {
+        "file": "view_fit.svg"
+      }
+    },
+    "view_grid": {
+      "16": {
+        "file": "view_grid.svg"
+      },
+      "32": {
+        "file": "view_grid.svg"
+      }
+    },
+    "view_home": {
+      "16": {
+        "file": "view_home.svg"
+      },
+      "32": {
+        "file": "view_home.svg"
+      }
+    },
+    "view_look_at": {
+      "16": {
+        "file": "view_look_at.svg"
+      },
+      "32": {
+        "file": "view_look_at.svg"
+      }
+    }
+  }
+}

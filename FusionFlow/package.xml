@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+  <name>FusionFlow</name><version>0.20.0</version><date>2026-10-20</date>
+  <description>Fusion-style Part Design workflow, saved inspection analyses and associative construction geometry.</description>
+  <license file="LICENSE">LGPL-2.1-or-later</license>
+  <url type="repository" branch="main">https://github.com/Jirkas-prog/freecad-fusion</url>
+  <url type="bugtracker">https://github.com/Jirkas-prog/freecad-fusion/issues</url>
+  <freecadmin>1.1.3</freecadmin>
+  <content><workbench><name>FusionFlow</name><subdirectory>./</subdirectory></workbench></content>
+</package>

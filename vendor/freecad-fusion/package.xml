@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+  <name>freecad-fusion</name>
+  <description>Fusion 360 navigation and shortcuts for FreeCAD, for users switching from Autodesk Fusion: drag the NaviCube to orbit, Fusion mouse navigation (Shift+middle orbit, middle pan, zoom at cursor) and Fusion single-key shortcuts (L, R, C, D, X, T, O, P, E, H, F, M, I, A). Fully reversible.</description>
+  <version>0.1.1</version>
+  <date>2026-09-29</date>
+  <maintainer email="arxdsilva@gmail.com">Arthur Rodrigues Xavier da Silva</maintainer>
+  <license file="LICENSE">MIT</license>
+  <url type="repository" branch="main">https://github.com/arxdsilva/freecad-fusion</url>
+  <url type="bugtracker">https://github.com/arxdsilva/freecad-fusion/issues</url>
+  <url type="readme">https://github.com/arxdsilva/freecad-fusion/blob/main/README.md</url>
+  <icon>Resources/icons/fusion.svg</icon>
+  <freecadmin>1.0.0</freecadmin>
+  <tag>fusion</tag>
+  <tag>fusion360</tag>
+  <tag>autodesk-fusion</tag>
+  <tag>viewcube</tag>
+  <tag>mouse-navigation</tag>
+  <tag>keyboard-shortcuts</tag>
+  <tag>navigation</tag>
+  <tag>navicube</tag>
+  <tag>shortcuts</tag>
+  <content>
+    <!-- Declared as a workbench so FreeCAD runs InitGui.py at startup: when a
+         package.xml exists, FreeCAD only runs InitGui.py for <workbench> entries.
+         No <classname>: the add-on adds no workbench of its own. -->
+    <workbench>
+      <name>freecad-fusion</name>
+      <description>Fusion-style navigation, NaviCube drag-to-orbit and shortcuts</description>
+      <subdirectory>./</subdirectory>
+    </workbench>
+  </content>
+</package>

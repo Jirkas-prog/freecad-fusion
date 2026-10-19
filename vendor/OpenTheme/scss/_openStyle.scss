@@ -1,0 +1,626 @@
+// normal, disabled, controls, hover, pressed
+QAbstractSpinBox {
+    min-height: 20px;
+    @include space2px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    padding-left: 6px;
+    text-align: left;
+    &::up-button {
+        width: 12px;
+        subcontrol-origin: border;
+        subcontrol-position: top right;
+        top: 1px;
+        right: 1px;
+        border-radius: 0px;
+        border-top-right-radius: 2px;
+    }
+    &::down-button {
+        width: 12px;
+        subcontrol-origin: border;
+        subcontrol-position: bottom right;
+        bottom: 1px;
+        right: 1px;
+        border-radius: 0px;
+        border-bottom-right-radius: 2px;
+    }
+    &::up-arrow {
+        top: 1px;
+    }
+    &::down-arrow {
+        top: 1px;
+    }
+}
+
+QAbstractSpinBox > QLineEdit {
+    padding: 0px;
+    margin: 0px;
+}
+
+// normal, disabled, hover, checked are defined
+QCheckBox { 
+    @include space0px;
+    margin: 2px;
+    &::indicator {
+        top: 1px;
+        padding: 1px;
+        width: 12px;
+        height: 12px;
+        &:checked {
+            width: 12px;
+            height: 12px;
+        }
+    }
+}
+
+// normal, disabled, hover, pressed, controls are defined
+QComboBox {
+    @include space2px;
+    padding-left: 8px;
+    &::drop-down {
+        subcontrol-origin: border;
+        subcontrol-position: top right;
+        border-top-right-radius: 2px;
+        border-bottom-right-radius: 2px;
+    }
+}
+
+// non-interactive element
+QDockWidget {
+    @include space0px;
+    &::title {
+        @include space0px;
+        text-align: center;
+    }
+}
+
+QDockWidget::title QToolButton {
+    margin: 1px;
+}
+
+// non-interactive element
+QDialog {
+    @include space0px;
+    dialogbuttonbox-buttons-have-icons: 0;
+}
+
+// non-interactive element
+QGroupBox {
+    font-weight: bold;
+    margin-top: 1.5ex;
+    padding-top: 10px;
+
+    &::title {
+        subcontrol-position: top left;
+        top: -8px;
+        padding-right: 12px;
+    }
+
+    &::indicator {
+        width: 12px;
+        height: 12px;
+        left: 6px;
+        margin-top: 4px;
+        border-radius: 2px;
+    }
+}
+
+// needs refinement applied to property view, spreadsheet etc.
+QHeaderView::section {
+    border-top: none;
+    border-bottom: none;
+    padding: 4px;
+    padding-left: 12px;
+}
+
+// non-interactive element
+QLabel {
+    text-align: right;
+    @include space0px;
+    &::label {
+        subcontrol-origin: center right;
+    }
+}
+
+// normal, disabled, hover, focus
+QLineEdit {
+    @include space2px;
+    @include wide6px;
+    min-height: 16px;
+}
+
+Qlist {
+    padding: 0px 8px 0px 8px;
+    &::indicator {
+        width: 12px;
+        height: 12px;
+        padding: 2px;
+        border-radius: 6px;
+    }
+    &::item {
+        margin: 0px 0px;
+        padding: 0px 3px;
+        font-weight: 700;
+        font-size: 24px;
+    }
+}
+
+QListView {
+    @extend QList;
+}
+
+QMainWindow {
+    @include space0px;
+    @include noborder;
+    &::separator {
+        &:vertical {
+            width: 4px;
+        }
+    }
+}
+
+// QMdiArea {
+//     background-image: url(qss:images_dark-light/FreecadLogo.png);
+//     background-position: center center;
+//     background-repeat: no-repeat;
+// }
+
+QMdiSubWindow {
+    border: 1px solid transparent;
+}
+
+//finished
+QMenu {
+    border-radius: 0px;
+    &::item {
+        padding: 4px;
+        padding-left: 10px;
+        padding-right: 28px;
+    }
+    &::icon {
+        left: 6px;
+    }
+    &::indicator {
+        width: 12px;
+        height: 12px;
+        left: 6px;
+        border-radius: 2px;
+    }
+    &::right-arrow {
+        right: 8px;
+    }
+    &::separator {
+        height: 1px;
+        margin: 0px 10px;
+    }
+} 
+
+QMenuBar {
+    padding: 3px 0px;
+    spacing: 2px;
+    &::item {
+        padding: 3px 6px;
+    }
+    &::item:pressed {
+        border-radius: 2px;
+    }
+    &::item:selected {
+        border-radius: 2px;
+    }
+}
+
+QProgressBar {
+    min-height: 24px;
+    text-align: center;
+    padding: 1px;
+    border-radius: 1px;
+    &::chunk {
+        border-radius: 1px;
+    }
+}
+
+QPushButton {
+    padding: 4px 20px;
+}
+
+QRadioButton {
+    @include space0px;
+    margin: 2px;
+    &::indicator {
+        top: 1px;
+        height: 13px;
+        width: 13px;
+        border-radius: 7px;
+    }
+}
+
+QScrollBar {
+    margin: 0px;
+    &::handle {
+        border-radius: 3px;
+        &:vertical {
+            margin: 16px 3px;
+            min-height: 12px;
+        }
+        &:horizontal{
+            margin: 3px 16px;
+            min-width: 8px;
+        }
+    }
+    &::sub-line {
+        &:vertical {
+            margin: 3px 0px 3px 1px; /* 1px to correctly fit the 10px width image */
+            height: 6px;
+            width: 10px;
+            subcontrol-position: top;
+            subcontrol-origin: margin;
+        }
+        &:horizontal:horizontal {
+            margin: 0px 3px 0px 3px; /* 1px to correctly fit the 10px width image */
+            width: 10px;
+            height: 7px;
+            subcontrol-position: left;
+            subcontrol-origin: margin;
+        }
+    }
+    &::add-line {
+        &:vertical {
+            margin: 3px 0px 3px 1px; /* 1px to correctly fit the 10px width image */
+            height: 6px;
+            width: 10px;
+            subcontrol-position: bottom;
+            subcontrol-origin: margin;  
+        }
+        &:horizontal {
+            margin: 0px 3px 0px 3px; /* 1px to correctly fit the 10px width image */
+            width: 10px;
+            height: 7px;
+            subcontrol-position: right;
+            subcontrol-origin: margin;
+        }
+    }
+}
+
+QSizeGrip {
+    width: 12px;
+    height: 12px;
+}
+
+QTabBar {
+    margin: 4px;
+
+    &::tab {
+        margin: 4px;
+        padding: 4px;
+        padding-left: 12px;
+        padding-right: 12px;
+        min-width: 16px;
+        border-radius: 4px;
+
+        &:left,
+        &:right {
+            padding-left: 4px;
+            padding-right: 4px;
+            padding-bottom: 12px;
+            padding-top: 12px;
+        
+            min-width: 24px;
+            min-height: 24px;
+        }
+    }
+
+    &::close-button {
+        margin-right: 6px;
+        subcontrol-origin: margin;
+        subcontrol-position: center right;
+        background-position: center center;
+        background-repeat: none;
+    }
+
+    &::scroller {
+       width: 52px;
+       margin: 7px 0px 7px 3px;
+    }
+    qproperty-drawBase: 0;
+}
+
+QTreeView {
+    show-decoration-selected: 0;
+    padding: 0px 8px 0px 8px;
+    &::indicator {
+        width: 9px;
+        height: 9px;
+        padding: 2px;
+        border-radius: 6px;
+    }
+    &::item {
+        margin: 0px 0px;
+        padding: 0px 3px;
+        font-size: 24px;
+    }
+}
+
+QTreeView QLineEdit {
+    padding: 0px;
+    margin: 0px;
+}
+
+QToolBar {
+    padding: 2px;
+    border-radius: 0px;
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    QTabBar {
+        &::tab { 
+            padding-top: 6px;
+        }
+    }
+    QPushButton {
+        padding: 3px;
+    }
+    &::separator {
+        &:vertical {
+            height: 1px;
+            margin: 4px 6px;
+        }
+        &:horizontal {
+            width: 1px;
+            margin: 6px 4px;
+        }
+    }
+}
+
+// special case for toolbars placed in menu bar and status bar
+QStatusBar QToolBar, QMenuBar QToolBar {
+    background-color: transparent;
+    border-bottom: none;
+}
+
+Gui--ToolBarAreaWidget {
+    background-color: transparent;
+}
+
+QToolButton {
+    margin: 0px 3px 0px 3px;
+    padding: 2px;
+    border-radius: 4px;
+    
+    &:hover, &:focus, &:pressed {
+        margin: 0px 3px 0px 3px;
+    }
+    &::menu-button {
+        border-radius: 2px;
+        height: 2.0ex;
+        width: 2.0ex;
+        padding: 0px;
+        border-radius: 2px;
+        subcontrol-origin: padding;
+        subcontrol-position: right bottom;
+    }
+    &::menu-arrow {
+        width: 1.5ex;
+        height: 1.5ex;
+        subcontrol-origin: content;
+        subcontrol-position: center center;
+    }
+    &::menu-indicator {
+        /* Exclude a shift for better image */
+        subcontrol-origin: padding;
+        /* Shift it a bit */
+    }
+}
+
+QToolButton#qt_toolbar_ext_button {
+    margin: 0px;
+    padding: 0px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    min-width: 10px; 
+}
+
+QToolBar > QToolButton#qt_toolbutton_menubutton {
+    padding-right: 4px;
+    &::menu-button {
+        subcontrol-origin: margin;
+    }
+    &::menu-indicator {
+        subcontrol-position: right bottom;
+    }
+}
+
+QToolTip {
+    padding: 4px;
+}
+
+// Specialty styling
+QDialog#Gui__Dialog__DlgPreferences QGroupBox {
+    border-bottom: 0px;
+}
+
+QDialog#Gui__Dialog__DlgPreferences QListView {
+    min-width: 120px;
+}
+ 
+QDialog#Gui__Dialog__DlgPreferences QTreeView#groupsTreeView {
+    show-decoration-selected: 1;
+
+    &::item {
+        border: none;
+        border-radius: 0;
+        background-color: transparent;
+
+        &:selected {
+            border: none;
+        }
+    }
+}
+
+
+QToolBar > Gui--WorkbenchComboBox QAbstractItemView {
+    min-width: 180px;
+}
+
+QWidget#wbList QPushButton {
+    @extend QPushButton;
+}
+
+/*==================================================================================================
+Tasks panel (custom FreeCAD class)
+==================================================================================================*/
+/* Panel header */
+QSint--ActionGroup QFrame[class="header"] {
+    margin: 0px;
+    padding: 0px;    
+}
+
+QSint--ActionGroup QToolButton[class="header"] {
+    text-align: left;
+    font-weight: bold;
+    margin: 0px;
+    padding: 0px;
+}
+
+QSint--ActionGroup QFrame[class="header"] QLabel {
+    background-repeat: none;
+    background-position: center center;
+    padding: 0px;
+    margin: 0px;
+}
+
+QSint--ActionGroup QFrame[class="header"] QLabel[fold="true"] {
+    background-repeat: none;
+    background-position: center center;
+    padding: 0px;
+    margin: 0px;
+}
+
+QSint--ActionGroup QFrame[class="content"] QGroupBox > QCheckBox {
+    subcontrol-origin: border;
+    subcontrol-position: center left;
+}
+
+
+QSint--ActionGroup QFrame[class="content"] QTreeView QAbstractSpinBox {
+    margin: 0px;
+    padding: 0px 0px 1px 0px;
+}
+
+QDialog#Gui__Dialog__DlgPreferences QComboBox {
+    max-height: 22px;
+}
+
+/* Cells with values that can only be changed with "..." button (Attachment)
+/* These seem to draw on top of the underlying label, so must be completely hidden or have an opaque background */
+Gui--PropertyEditor--PropertyEditor > QWidget > QWidget > QLabel {
+	margin-left: 1px;
+    max-height: 20px;
+}
+
+Gui--PropertyEditor--PropertyEditor QWidget {
+    @include space0px;
+    border: 0px solid transparent;
+    border-right: 1px solid $contrastBorder;
+    border-bottom: 1px solid $contrastBorder;
+    border-radius: 0px;
+    min-height: 0px;
+}
+
+Gui--PropertyEditor--PropertyEditor QLineEdit > QWidget {
+    margin-top: 3px;
+}
+
+QSint--ActionGroup QFrame[class="content"] QToolButton {
+    @extend QPushButton;
+}
+
+Gui--WorkbenchComboBox {
+    @extend QComboBox;
+}
+
+QTabWidget#TabBar > QTabBar::tab:top,
+QTabWidget#TabBar > QTabBar::tab:bottom {
+    margin: 0px 2px 4px 2px;
+    min-width: -1;
+}
+
+QWidget#Tabs {
+    margin: 0px;
+    margin-left: 6px;
+    padding-top: 0px;
+}
+
+QWidget#Selector > QToolButton {
+    max-height: 24px;
+}
+
+SpreadsheetGui--SheetTableView QLineEdit {
+    min-width: 186px;
+}
+
+/**
+ * Special handling for WB Tab Bar
+ */
+#WbTabBar {
+    // The "+" button styled to look like a tab
+    #WbTabBarMore {
+        margin: 0;
+        padding: 5px 8px;
+        margin-top: 1px;
+        padding-top: 4px;
+        border-radius: 4px;
+    }
+
+    > QTabBar {
+        // This adds background for scroll buttons
+        #ScrollLeftButton, #ScrollRightButton {
+            @extend QPushButton;
+        }
+
+        background-color: transparent;
+        qproperty-drawBase: 0;
+
+        &::tab {
+            &:left, &:right {
+                padding-left: 4px;
+                padding-right: 4px;
+                padding-bottom: 12px;
+                padding-top: 12px;
+                
+                min-height: 2em;
+                min-width: 24px;
+            }
+        }
+
+        &[style="icon-only"]::tab {
+            min-width: 16px;
+            min-height: 16px;
+
+            &:top, &:bottom {
+                padding-right: 0;
+            }
+            &:left, &:right {
+                padding-top: 0;
+            }
+        }
+    }
+}
+
+#ScrollLeftButton,
+#ScrollRightButton {
+    margin: 7px 0px 7px 3px;
+    max-height: 22px;
+}
+
+// QWidget#Workbench,
+// QToolBar#Edit,
+// QToolBar#File,
+// QToolBar#Help {
+//     border: 0px solid transparent; 
+// }
+
+#fcSymbolDir,
+#fcFile {
+    max-height: 26px; 
+}
