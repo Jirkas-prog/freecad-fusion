@@ -1,4 +1,5 @@
 """Compact in-canvas input linked to the existing modelling card's fields."""
+from fusionflow_i18n import tr
 from PySide import QtCore as C, QtWidgets as W
 from pivy import coin
 
@@ -51,6 +52,7 @@ class HandleInput(W.QFrame):
         fallback=next((item for item in options if item[1]==angle),options[0])
         option=next((item for item in options if item[:2]==(side,angle)),fallback)
         self.side,self.angle,label,self.field = option
+        label = tr(label)
         blocker = C.QSignalBlocker(self.value)
         self.value.setRange(self.field.minimum(),self.field.maximum())
         self.value.setDecimals(self.field.decimals()); self.value.setSuffix(self.field.suffix())
@@ -59,10 +61,10 @@ class HandleInput(W.QFrame):
         self.value.setStyleSheet('')
         del blocker
         self.mode.setText('∠' if self.angle else '↔')
-        self.mode.setAccessibleName('Vybrat rozměr: '+label)
-        self.mode.setToolTip(label+' · vybrat jiný rozměr')
+        self.mode.setAccessibleName(tr("Select dimension: ")+label)
+        self.mode.setToolTip(label+tr(" · select another dimension"))
         self.value.setAccessibleName(label)
-        self.help_text=label+'\nEnter: náhled · Ctrl+Enter: OK · Esc: Cancel · Tab: další rozměr'
+        self.help_text=label+tr("\nEnter: preview · Ctrl+Enter: OK · Esc: Cancel · Tab: next dimension")
         self.value.setToolTip(self.help_text)
         self.place()
         if focus:self.focus_value()
@@ -74,7 +76,7 @@ class HandleInput(W.QFrame):
     def build_menu(self):
         self.menu.clear()
         for side,angle,label,field in self.options():
-            action = self.menu.addAction(label)
+            action = self.menu.addAction(tr(label))
             action.setCheckable(True); action.setChecked(field is self.field)
             action.triggered.connect(lambda checked=False,s=side,a=angle:self.activate(s,a,True))
 
@@ -88,7 +90,7 @@ class HandleInput(W.QFrame):
 
     def commit(self):
         if not self.value.hasAcceptableInput():
-            self.value.setToolTip('Neúplné nebo neplatné číslo. Doplň hodnotu; Esc zruší operaci.')
+            self.value.setToolTip(tr("Incomplete or invalid number. Complete the value; Esc cancels the operation."))
             self.value.setStyleSheet('border:1px solid #e3a468;')
             self.value.setFocus(C.Qt.OtherFocusReason)
             return False

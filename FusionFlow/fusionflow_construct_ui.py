@@ -1,4 +1,5 @@
 """Construction cards with explicit references and native Undo previews."""
+from fusionflow_i18n import tr
 import FreeCAD as A
 import FreeCADGui as Gui
 from PySide import QtCore as C, QtWidgets as W
@@ -7,26 +8,26 @@ from fusionflow_ui import Panel,combo,number,selection,selected_name,open_panel
 from fusionflow_construct import LABELS,DEFAULTS,reference_roles,create
 
 HINTS={
- 'OffsetPlane':'Distance: rovinná stěna / rovina nebo XY/XZ/YZ. To object: rovina a cílový vrchol / bod; Offset přidá další odsazení.',
- 'AnglePlane':'Přímá hrana nebo osa, kolem které se rovina otáčí.',
- 'TangentPlane':'Válcová nebo kuželová stěna + volitelný bod. Bez bodu určuje polohu Angle.',
- 'Midplane':'Dvě rovinné stěny / roviny. Reverse přepne úhlovou půlící rovinu.',
- 'PerpendicularPlane':'Stěna / rovina + volitelný bod. U/V určuje směr u rovinné stěny; na zakřivené stěně vznikne tečná rovina v bodě.',
- 'TwoEdgesPlane':'Dvě přímé koplanární hrany / osy.',
- 'ThreePointsPlane':'Tři nekolineární vrcholy / konstrukční body.',
- 'PathPlane':'Jedna hrana cesty; Proportional měří podíl skutečné délky. To object vyžaduje druhou referenci: bod.',
- 'CylinderAxis':'Válcová, kuželová nebo toroidální stěna.',
- 'NormalAxis':'Stěna + volitelný vrchol / bod, který se promítne na její povrch.',
- 'TwoPlanesAxis':'Dvě nerovnoběžné rovinné stěny / roviny.',
- 'TwoPointsAxis':'Dva různé vrcholy / konstrukční body.',
- 'EdgeAxis':'Přímá hrana nebo osa.',
- 'VertexPoint':'Vrchol / konstrukční bod.',
- 'TwoEdgesPoint':'Dvě protínající se přímé hrany; uvažuje i jejich prodloužení.',
- 'ThreePlanesPoint':'Tři roviny s jediným společným průsečíkem.',
- 'CenterPoint':'Kruhová hrana, kulová nebo toroidální stěna.',
- 'EdgePlanePoint':'Hrana a rovinná stěna / rovina. Musí mít jediný průsečík.',
- 'PathPoint':'Jedna hrana cesty; podle délky nebo s druhou referencí: bodem.',
- 'UCS':'Rovinná stěna / rovina, nebo základní XY/XZ/YZ. Posuny jsou v místních osách.'}
+ 'OffsetPlane':tr("Distance: planar face / plane or XY/XZ/YZ. To Object: plane and target vertex / point; Offset adds an additional displacement."),
+ 'AnglePlane':tr("A straight edge or axis around which the plane rotates."),
+ 'TangentPlane':tr("A cylindrical or conical face + optional point. Without a point, Angle determines the position."),
+ 'Midplane':tr("Two planar faces / planes. Reverse switches the angle-bisecting plane."),
+ 'PerpendicularPlane':tr("Face / plane + optional point. U/V defines the direction on a planar face; a curved face produces a tangent plane at the point."),
+ 'TwoEdgesPlane':tr("Two straight coplanar edges / axes."),
+ 'ThreePointsPlane':tr("Three non-collinear vertices / construction points."),
+ 'PathPlane':tr("One path edge; Proportional measures a fraction of its actual length. To Object requires a second reference: a point."),
+ 'CylinderAxis':tr("A cylindrical, conical or toroidal face."),
+ 'NormalAxis':tr("Face + optional vertex / point projected onto its surface."),
+ 'TwoPlanesAxis':tr("Two nonparallel planar faces / planes."),
+ 'TwoPointsAxis':tr("Two distinct vertices / construction points."),
+ 'EdgeAxis':tr("A straight edge or axis."),
+ 'VertexPoint':tr("A vertex / construction point."),
+ 'TwoEdgesPoint':tr("Two intersecting straight edges, including their extensions."),
+ 'ThreePlanesPoint':tr("Three planes with a unique common intersection."),
+ 'CenterPoint':tr("A circular edge, spherical face or toroidal face."),
+ 'EdgePlanePoint':tr("An edge and planar face / plane. They must have a unique intersection."),
+ 'PathPoint':tr("One path edge; by length or with a second reference: a point."),
+ 'UCS':tr("A planar face / plane or base XY/XZ/YZ plane. Displacements use local axes.")}
 
 
 class ConstructPanel(Panel):
@@ -41,12 +42,12 @@ class ConstructPanel(Panel):
         self.selection_error=''
         self.hint=W.QLabel(HINTS[kind]);self.hint.setWordWrap(True);self.fields.addRow(self.hint)
         self.refs=W.QListWidget();self.refs.setFixedHeight(28*len(self.slots)+4)
-        self.refs.currentRowChanged.connect(self.choose_reference);self.fields.addRow('References',self.refs)
+        self.refs.currentRowChanged.connect(self.choose_reference);self.fields.addRow(tr("References"),self.refs)
         self.refs.itemClicked.connect(lambda item:self.choose_reference(self.refs.row(item)))
         self.pick_status=W.QLabel();self.pick_status.setWordWrap(True);self.fields.addRow(self.pick_status)
         buttons=W.QWidget();layout=W.QHBoxLayout(buttons);layout.setContentsMargins(0,0,0,0)
         for title,callback in [('Use selection',self.use_selection),('Remove',self.remove),('Clear',self.clear)]:
-            b=W.QPushButton(title);b.clicked.connect(callback);layout.addWidget(b)
+            b=W.QPushButton(tr(title));b.clicked.connect(callback);layout.addWidget(b)
         self.fields.addRow(buttons)
         self.widgets={}
         for name,default in DEFAULTS.items():
@@ -55,17 +56,17 @@ class ConstructPanel(Panel):
             if hasattr(value,'Value'):value=value.Value
             if name in ('BasePlane','OffsetMode','PathMode','Direction','SizeMode'):
                 values={'BasePlane':['XY','XZ','YZ'],'OffsetMode':['Distance','To object'],'PathMode':['Proportional','Distance','To object'],'Direction':['U','V'],'SizeMode':['Automatic','Manual']}[name]
-                widget=combo([(s,s) for s in values]);selected_name(widget,value)
-            elif name=='Reverse':widget=W.QCheckBox('Other bisector / reverse path');widget.setChecked(value)
+                widget=combo([(s,s) for s in values], translate_labels=True);selected_name(widget,value)
+            elif name=='Reverse':widget=W.QCheckBox(tr("Other bisector / reverse path"));widget.setChecked(value)
             else:
                 widget=number(value,name=='Angle')
                 if name=='Angle':widget.setRange(-360,360);widget.setValue(value)
                 if name=='Fraction':widget.setSuffix('');widget.setRange(-100,100);widget.setSingleStep(.1)
                 if name=='Size':widget.setRange(.01,100000)
             labels={'BasePlane':'Base plane','OffsetMode':'Extent','PathMode':'Position','Direction':'Plane direction','Fraction':'Fraction','Size':'Display size','SizeMode':'Resize'}
-            self.widgets[name]=self.row(labels.get(name,name),widget)
+            self.widgets[name]=self.row(tr(labels.get(name,name)),widget)
         self.widgets['OffsetMode'].currentIndexChanged.connect(self.offset_mode_changed)
-        sketch=W.QPushButton('Create Sketch');sketch.clicked.connect(self.create_sketch)
+        sketch=W.QPushButton(tr("Create Sketch"));sketch.clicked.connect(self.create_sketch)
         self.fields.addRow(sketch);sketch.setVisible(kind.endswith('Plane') or kind=='Midplane')
         self.sketch_button=sketch
         self.handles=None
@@ -115,7 +116,7 @@ class ConstructPanel(Panel):
         refs=self.candidates()
         if not refs:return
         if len(refs)>len(self.roles):
-            self.selection_error='Vyber nejvýše %d referencí pro %s.'%(len(self.roles),LABELS[self.kind])
+            self.selection_error=tr("Select at most %d references for %s.")%(len(self.roles),tr(LABELS[self.kind]))
         else:
             self.selection_error=''
             self.slots=refs+[None]*(len(self.roles)-len(refs))
@@ -142,8 +143,8 @@ class ConstructPanel(Panel):
 
     def update_pick_status(self):
         role=self.roles[self.pick_index] if self.pick_index<len(self.roles) else 'Extra reference'
-        action='Nahradit' if self.slots[self.pick_index] else 'Vybrat'
-        self.pick_status.setText('%s %s: klikni v modelu. Jinou referenci změníš výběrem jejího řádku.'%(action,role))
+        action=tr("Replace") if self.slots[self.pick_index] else tr("Select")
+        self.pick_status.setText(tr("%s %s: click in the model. Select another reference row to change it.")%(action,tr(role)))
 
     def remove(self):
         row=self.refs.currentRow()
@@ -163,8 +164,8 @@ class ConstructPanel(Panel):
             role=self.roles[i] if i<len(self.roles) else 'Extra reference'
             if entry:
                 obj,subs=entry;value=obj.Label+(' · '+', '.join(s for s in subs if s) if any(subs) else '')
-            else:value='Select…'
-            item=W.QListWidgetItem(role+' — '+value);item.setToolTip(item.text());item.setSizeHint(C.QSize(0,26))
+            else:value=tr('Select…')
+            item=W.QListWidgetItem(tr(role)+' — '+value);item.setToolTip(item.text());item.setSizeHint(C.QSize(0,26))
             self.refs.addItem(item)
         self.refs.setCurrentRow(self.pick_index);del blocker
         self.update_pick_status()
@@ -187,7 +188,7 @@ class ConstructPanel(Panel):
                  'Reverse':path or self.kind=='Midplane','X':self.kind=='UCS','Y':self.kind=='UCS','Z':self.kind=='UCS'}
         for name,widget in self.widgets.items():self.fields.setRowVisible(widget,visible[name])
         if self.kind=='OffsetPlane':
-            self.fields.labelForField(self.widgets['Distance']).setText('Offset' if to_object else 'Distance')
+            self.fields.labelForField(self.widgets['Distance']).setText(tr("Offset") if to_object else tr("Distance"))
             self.handles.offset_label='Offset' if to_object else 'Distance'
         super().preview();self.sketch_button.setEnabled(bool(self.result))
         if self.selection_error:self.message.show()
@@ -217,7 +218,7 @@ class ConstructPanel(Panel):
         # Preserve roles when, for example, Plane is picked before Edge.
         needed=required if required else 1 if any(self.slots) else 0
         for index in range(needed):
-            if self.slots[index] is None:raise ValueError('Vyber referenci: '+self.roles[index]+'.')
+            if self.slots[index] is None:raise ValueError(tr("Select a reference: ")+tr(self.roles[index])+'.')
         return create(self.doc,self.kind,self.references,self.options(),self.doc.getObject(self.edit_name) if self.edit_name else None)
 
     def create_sketch(self):
@@ -242,7 +243,7 @@ class ConstructPanel(Panel):
             if 'Invalid' in sketch.State:raise ValueError(sketch.getStatusString())
             doc.commitTransaction()
         except Exception as error:
-            doc.abortTransaction();W.QMessageBox.warning(Gui.getMainWindow(),'Create Sketch',str(error));return
+            doc.abortTransaction();W.QMessageBox.warning(Gui.getMainWindow(),tr("Create Sketch"),str(error));return
         active.activeView().setActiveObject('pdbody',body);Gui.Selection.clearSelection()
         C.QTimer.singleShot(0,lambda:active.setEdit(sketch.Name))
 

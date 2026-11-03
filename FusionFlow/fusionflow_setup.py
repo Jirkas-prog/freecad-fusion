@@ -1,4 +1,5 @@
 """Apply the user's requested light, Fusion-style setup once, through FreeCAD's API."""
+from fusionflow_i18n import tr
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import FreeCAD as App
@@ -9,7 +10,7 @@ from PySide import QtCore, QtGui, QtWidgets
 def configure():
     theme = Path(App.getUserAppDataDir()) / 'Mod/OpenTheme/OpenDark'
     if not theme.is_dir():
-        raise RuntimeError('Chybí nainstalovaný OpenTheme / OpenDark.')
+        raise RuntimeError(tr("OpenTheme / OpenDark is not installed."))
     # Read the existing theme preference pack. Do not replace user.cfg while FreeCAD runs.
     root = ET.parse(theme / 'OpenDark.cfg').find('./FCParamGroup')
     def apply(node, path):
@@ -76,4 +77,4 @@ def activate():
         if dock.objectName() in ('Python console', 'Report view'):
             dock.hide()
     App.saveParameter()
-    App.Console.PrintMessage('Nastavení FusionFlow bylo použito a uloženo.\n')
+    App.Console.PrintMessage(tr("FusionFlow settings applied and saved.\n"))

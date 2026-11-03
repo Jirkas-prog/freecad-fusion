@@ -1,4 +1,5 @@
 """Two presentations of the same document, in FreeCAD's native dock/overlay."""
+from fusionflow_i18n import tr
 import FreeCAD as App
 import FreeCADGui as Gui
 from PySide import QtCore as C, QtGui as G, QtWidgets as W
@@ -104,8 +105,8 @@ class Browser(C.QObject):
         self.header.setStyleSheet('QWidget#FusionBrowserHeader {background:#394352;border:1px solid #596677;}')
         row=W.QHBoxLayout(self.header);row.setContentsMargins(2,0,3,0);row.setSpacing(3)
         self.fold=W.QToolButton();self.fold.setText('«');self.fold.setFixedSize(17,19)
-        self.fold.setToolTip('Sbalit / rozbalit browser');self.fold.clicked.connect(self.toggle)
-        row.addWidget(self.fold);row.addWidget(W.QLabel('BROWSER'));row.addStretch()
+        self.fold.setToolTip(tr("Collapse / expand browser"));self.fold.clicked.connect(self.toggle)
+        row.addWidget(self.fold);row.addWidget(W.QLabel(tr("BROWSER")));row.addStretch()
         self.problems=W.QToolButton();self.problems.setObjectName('FusionBrowserProblems')
         self.problems.setToolButtonStyle(C.Qt.ToolButtonTextBesideIcon)
         self.problem_menu=W.QMenu(self.problems)
@@ -113,28 +114,28 @@ class Browser(C.QObject):
         self.problems.setMenu(self.problem_menu);self.problems.setPopupMode(W.QToolButton.InstantPopup)
         row.addWidget(self.problems)
         self.links=W.QToolButton();self.links.setText('↔');self.links.setFixedSize(23,19)
-        self.links.setObjectName('FusionBrowserRelations');self.links.setToolTip('Vstupy a navazující operace vybraného objektu')
+        self.links.setObjectName('FusionBrowserRelations');self.links.setToolTip(tr("Inputs and dependent operations of the selected object"))
         self.link_menu=W.QMenu(self.links);self.link_menu.aboutToShow.connect(self.fill_links)
         self.links.setMenu(self.link_menu);self.links.setPopupMode(W.QToolButton.InstantPopup);row.addWidget(self.links)
         menu_button=W.QToolButton();menu_button.setText('⌄');menu_button.setFixedSize(22,19)
-        menu_button.setObjectName('FusionBrowserModes');menu_button.setToolTip('Režim browseru a zobrazení')
+        menu_button.setObjectName('FusionBrowserModes');menu_button.setToolTip(tr("Browser and display mode"))
         menu=W.QMenu(menu_button)
         from fusionflow_ribbon import MENU_STYLE
         menu.setStyleSheet(MENU_STYLE)
         self.problem_menu.setStyleSheet(MENU_STYLE);self.link_menu.setStyleSheet(MENU_STYLE)
         self.problem_menu.setToolTipsVisible(True);self.link_menu.setToolTipsVisible(True)
         self.modes={};group=G.QActionGroup(menu);group.setExclusive(True)
-        for key,label in [('grouped','Fusion · Bodies / Sketches'),('native','FreeCAD · strom operací')]:
-            action=menu.addAction(label);action.setCheckable(True);group.addAction(action)
+        for key,label in [('grouped','Fusion · Bodies / Sketches'),('native',tr("FreeCAD · feature tree"))]:
+            action=menu.addAction(tr(label));action.setCheckable(True);group.addAction(action)
             action.triggered.connect(lambda checked=False,mode=key:self.set_mode(mode));self.modes[key]=action
         menu.addSeparator()
-        self.overlay_action=menu.addAction('Průhledně přes model');self.overlay_action.setCheckable(True)
+        self.overlay_action=menu.addAction(tr("Transparent overlay on the model"));self.overlay_action.setCheckable(True)
         self.overlay_action.toggled.connect(self.set_overlay)
-        self.props=menu.addAction('Vlastnosti objektu · Data / View');self.props.setCheckable(True)
+        self.props=menu.addAction(tr("Object properties · Data / View"));self.props.setCheckable(True)
         self.props.setEnabled(self.properties is not None);self.props.toggled.connect(self.show_properties)
         menu_button.setMenu(menu);menu_button.setPopupMode(W.QToolButton.InstantPopup);row.addWidget(menu_button)
         self.minimize=W.QToolButton();self.minimize.setText('−');self.minimize.setFixedSize(19,19)
-        self.minimize.setToolTip('Sbalit / rozbalit browser');self.minimize.clicked.connect(self.toggle)
+        self.minimize.setToolTip(tr("Collapse / expand browser"));self.minimize.clicked.connect(self.toggle)
         row.addWidget(self.minimize);layout.addWidget(self.header)
         self.tree=GroupedTree(self);layout.addWidget(self.tree,1)
         self.native.setParent(self.content);layout.addWidget(self.native,1)
@@ -247,13 +248,13 @@ class Browser(C.QObject):
                 self.tree.clear();self.items={};self.signature=signature
                 if doc:
                     root=self.add(self.tree,(doc.Name,''),doc.Label,'component',expanded=True)
-                    bodies=self.add(root,(doc.Name,'@bodies'),'Bodies','folder',expanded=True)
-                    sketches=self.add(root,(doc.Name,'@sketches'),'Sketches','folder',expanded=True)
-                    origin=self.add(root,(doc.Name,'@origin'),'Origin','origin')
+                    bodies=self.add(root,(doc.Name,'@bodies'),tr('Bodies'),'folder',expanded=True)
+                    sketches=self.add(root,(doc.Name,'@sketches'),tr('Sketches'),'folder',expanded=True)
+                    origin=self.add(root,(doc.Name,'@origin'),tr('Origin'),'origin')
                     construction=None;other=None;analyses=None
                     for obj in objects:
                         if getattr(obj,'AnalysisType',''):
-                            if analyses is None:analyses=self.add(root,(doc.Name,'@analysis'),'Analysis','folder',expanded=True)
+                            if analyses is None:analyses=self.add(root,(doc.Name,'@analysis'),tr('Analysis'),'folder',expanded=True)
                             self.add(analyses,(doc.Name,obj.Name),obj.Label,'section',obj)
                         elif obj.TypeId=='PartDesign::Body' or (obj.isDerivedFrom('Part::Feature') and not obj.isDerivedFrom('PartDesign::Feature') and obj.TypeId!='Sketcher::SketchObject' and getattr(obj,'Shape',None) and obj.Shape.Solids):
                             self.add(bodies,(doc.Name,obj.Name),obj.Label,'body',obj)
@@ -263,10 +264,10 @@ class Browser(C.QObject):
                             node=self.add(origin,(doc.Name,obj.Name),(owner.Label+' · ' if owner else '')+obj.Label,'origin',obj)
                             for axis in obj.OriginFeatures:self.add(node,(doc.Name,axis.Name),axis.Label,'axis',axis)
                         elif getattr(obj,'ConstructionMode','') or obj.TypeId in ('PartDesign::Plane','PartDesign::Line','PartDesign::Point','PartDesign::SubShapeBinder','PartDesign::ShapeBinder'):
-                            if construction is None:construction=self.add(root,(doc.Name,'@construction'),'Construction','folder')
+                            if construction is None:construction=self.add(root,(doc.Name,'@construction'),tr('Construction'),'folder')
                             self.add(construction,(doc.Name,obj.Name),obj.Label,'construct',obj)
                         elif not obj.isDerivedFrom('PartDesign::Feature') and obj.TypeId not in ('App::Line','App::Plane','App::Point'):
-                            if other is None:other=self.add(root,(doc.Name,'@other'),'Other objects','folder')
+                            if other is None:other=self.add(root,(doc.Name,'@other'),tr('Other objects'),'folder')
                             self.add(other,(doc.Name,obj.Name),obj.Label,'component',obj)
                     for folder in (bodies,sketches,origin):folder.setHidden(folder.childCount()==0)
             selected={(o.Document.Name,o.Name) for o in Gui.Selection.getSelection()}
@@ -275,7 +276,7 @@ class Browser(C.QObject):
             self.problems.setVisible(bool(problems))
             self.problems.setText(str(len(problems)))
             self.problems.setIcon(icons.icon('status_error' if any(result[0]==2 for o,result in problems) else 'status_warning',True))
-            self.problems.setToolTip('Objekty vyžadující pozornost: %d\nKlikni pro diagnostiku.' % len(problems))
+            self.problems.setToolTip(tr("Objects needing attention: %d\nClick for diagnostics.") % len(problems))
             self.links.setEnabled(len(selected)==1)
             for key,item in self.items.items():
                 obj=self.obj(item)
@@ -349,18 +350,18 @@ class Browser(C.QObject):
         menu.setStyleSheet(MENU_STYLE)
         menu.setToolTipsVisible(True)
         inspect.add_diagnostics(menu,obj)
-        menu.addAction('Upravit / aktivovat',lambda:self.edit(item))
+        menu.addAction(tr("Edit / activate"),lambda:self.edit(item))
         if getattr(obj, 'FusionFlowCut', ''):
             from fusionflow_ui import edit_feature
-            menu.addAction('Upravit nativní Pocket', lambda:edit_feature(obj, native=True))
-        menu.addAction('Skrýt' if obj.Visibility else 'Zobrazit',lambda:self.visibility(item))
-        menu.addAction('Přejmenovat · F2',lambda:self.tree.editItem(item))
-        menu.addAction('Vlastnosti',lambda:self.props.setChecked(True))
+            menu.addAction(tr("Edit native Pocket"), lambda:edit_feature(obj, native=True))
+        menu.addAction(tr("Hide") if obj.Visibility else tr("Show"),lambda:self.visibility(item))
+        menu.addAction(tr("Rename · F2"),lambda:self.tree.editItem(item))
+        menu.addAction(tr("Properties"),lambda:self.props.setChecked(True))
         menu.addSeparator();inspect.add_relations(menu,obj)
         from fusionflow_ui import history_objects
         if obj in history_objects(obj.Document):
             identity=inspect.key(obj)
-            menu.addAction('Najít v historii',lambda:inspect.reveal(identity))
+            menu.addAction(tr("Find in history"),lambda:inspect.reveal(identity))
         menu.exec(self.tree.viewport().mapToGlobal(point))
         menu.deleteLater()
 

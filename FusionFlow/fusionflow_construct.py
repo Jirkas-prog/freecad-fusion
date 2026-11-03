@@ -1,4 +1,5 @@
 """Associative construction geometry, using native attachment where available."""
+from fusionflow_i18n import tr
 import math
 import FreeCAD as A
 import Part
@@ -104,27 +105,27 @@ def geometry(references):
             elif len(shape.Faces)==1:result.append(shape.Faces[0])
             elif len(shape.Edges)==1:result.append(shape.Edges[0])
             elif len(shape.Vertexes)==1:result.append(shape.Vertexes[0])
-            else:raise ValueError('Vyber konkrétní stěnu, hranu nebo vrchol místo celého tělesa.')
+            else:raise ValueError(tr("Select a specific face, edge or vertex instead of the whole body."))
     return result
 
 
 def unit(vector):
-    if vector.Length<1e-8:raise ValueError('Reference neurčují jednoznačný směr. Zkontroluj shodné body nebo rovnoběžnost.')
+    if vector.Length<1e-8:raise ValueError(tr("The references do not define a unique direction. Check coincident points or parallel references."))
     return vector/vector.Length
 
 
 def point(shape):
-    if shape.ShapeType!='Vertex':raise ValueError('Tato reference musí být vrchol nebo konstrukční bod.')
+    if shape.ShapeType!='Vertex':raise ValueError(tr("This reference must be a vertex or construction point."))
     return shape.Point
 
 
 def plane(shape):
-    if shape.ShapeType!='Face' or not isinstance(shape.Surface,Part.Plane):raise ValueError('Tato reference musí být rovinná stěna nebo konstrukční rovina.')
+    if shape.ShapeType!='Face' or not isinstance(shape.Surface,Part.Plane):raise ValueError(tr("This reference must be a planar face or construction plane."))
     return shape.CenterOfMass,shape.normalAt(0,0)
 
 
 def line(shape):
-    if shape.ShapeType!='Edge' or not isinstance(shape.Curve,(Part.Line,Part.LineSegment)):raise ValueError('Vyber přímou hranu nebo konstrukční osu.')
+    if shape.ShapeType!='Edge' or not isinstance(shape.Curve,(Part.Line,Part.LineSegment)):raise ValueError(tr("Select a straight edge or construction axis."))
     return shape.valueAt(shape.FirstParameter),unit(shape.tangentAt(shape.FirstParameter))
 
 
@@ -135,16 +136,16 @@ def frame(position,normal,x=None):
 
 def plane_intersection(a,b):
     p,n=plane(a);q,m=plane(b);direction=n.cross(m);den=direction.dot(direction)
-    if den<1e-12:raise ValueError('Rovnoběžné roviny nemají jedinou průsečnici.')
+    if den<1e-12:raise ValueError(tr("Parallel planes have no unique intersection line."))
     origin=(m.cross(direction)*n.dot(p)+direction.cross(n)*m.dot(q))/den
     return origin,unit(direction)
 
 
 def along(edge,settings,reference=None):
-    if edge.ShapeType!='Edge' or edge.Length<1e-9:raise ValueError('Vyber jednu nenulovou hranu cesty.')
+    if edge.ShapeType!='Edge' or edge.Length<1e-9:raise ValueError(tr("Select one nonzero path edge."))
     distance=settings['Fraction']*edge.Length if settings['PathMode']=='Proportional' else settings['Distance']
     if settings['PathMode']=='To object':
-        if reference is None:raise ValueError('To object vyžaduje druhou referenci: bod.')
+        if reference is None:raise ValueError(tr("To Object requires a second reference: a point."))
         target=point(reference);_,pairs,_=edge.distToShape(Part.Vertex(target))
         parameter=edge.Curve.parameter(pairs[0][0])
         distance=(Part.Edge(edge.Curve,edge.FirstParameter,parameter).Length if parameter>edge.FirstParameter+1e-10 else 0)+settings['Distance']
@@ -157,11 +158,11 @@ def along(edge,settings,reference=None):
 
 def placement(kind,references,options):
     s=dict(DEFAULTS,**options);g=geometry(references)
-    if kind=='OffsetPlane' and s['OffsetMode'] not in ('Distance','To object'):raise ValueError('Neznámý režim odsazené roviny.')
+    if kind=='OffsetPlane' and s['OffsetMode'] not in ('Distance','To object'):raise ValueError(tr("Unknown offset-plane mode."))
     required,roles=reference_roles(kind,s)
-    if len(g)<required:raise ValueError('Vyber %d referencí pro %s.'%(required,LABELS[kind]))
+    if len(g)<required:raise ValueError(tr("Select %d references for %s.")%(required,LABELS[kind]))
     if len(g)>len(roles):
-        raise ValueError('Příliš mnoho referencí pro '+LABELS[kind]+'.')
+        raise ValueError(tr("Too many references for ")+LABELS[kind]+'.')
     if kind in ('OffsetPlane','UCS'):
         p,n=plane(g[0]) if g else (A.Vector(),{'XY':A.Vector(0,0,1),'XZ':A.Vector(0,-1,0),'YZ':A.Vector(1,0,0)}[s['BasePlane']])
         if kind=='OffsetPlane' and s['OffsetMode']=='To object':p+=n*n.dot(point(g[1])-p)
@@ -180,14 +181,14 @@ def placement(kind,references,options):
         return frame(center,normal)
     if kind in ('TangentPlane','PerpendicularPlane','NormalAxis'):
         face=g[0]
-        if face.ShapeType!='Face':raise ValueError('První reference musí být stěna.')
+        if face.ShapeType!='Face':raise ValueError(tr("The first reference must be a face."))
         surface=face.Surface;u0,u1,v0,v1=face.ParameterRange
         if len(g)>1:
             anchor=point(g[1]) if g[1].ShapeType=='Vertex' else plane(g[1])[0]
             u,v=surface.parameter(anchor)
         else:u,v=(u0+u1)*.5,(v0+v1)*.5
         if kind=='TangentPlane':
-            if not isinstance(surface,(Part.Cylinder,Part.Cone)):raise ValueError('Tangent Plane vyžaduje válcovou nebo kuželovou stěnu.')
+            if not isinstance(surface,(Part.Cylinder,Part.Cone)):raise ValueError(tr("Tangent Plane requires a cylindrical or conical face."))
             if len(g)==1:u=u0+math.radians(s['Angle'])
         position=face.valueAt(u,v);normal=face.normalAt(u,v)
         if kind=='PerpendicularPlane' and isinstance(surface,Part.Plane):
@@ -199,12 +200,12 @@ def placement(kind,references,options):
         a,u=line(g[0]);b,v=line(g[1]);normal=u.cross(v)
         if normal.Length<1e-8:normal=u.cross(b-a)
         normal=unit(normal)
-        if abs((b-a).dot(normal))>1e-6:raise ValueError('Mimoběžné hrany neleží ve společné rovině.')
+        if abs((b-a).dot(normal))>1e-6:raise ValueError(tr("Skew edges do not lie in a common plane."))
         return frame((a+b)*.5,normal,u)
     if kind in ('PathPlane','PathPoint'):return frame(*along(g[0],s,g[1] if len(g)>1 else None))
     if kind=='CylinderAxis':
         surface=g[0].Surface if g[0].ShapeType=='Face' else None
-        if not isinstance(surface,(Part.Cylinder,Part.Cone,Part.Toroid)):raise ValueError('Vyber válcovou, kuželovou nebo toroidální stěnu.')
+        if not isinstance(surface,(Part.Cylinder,Part.Cone,Part.Toroid)):raise ValueError(tr("Select a cylindrical, conical or toroidal face."))
         return frame(surface.Center,surface.Axis)
     if kind=='TwoPlanesAxis':return frame(*plane_intersection(*g))
     if kind=='TwoPointsAxis':return frame(point(g[0]),point(g[1])-point(g[0]))
@@ -212,26 +213,26 @@ def placement(kind,references,options):
     if kind=='VertexPoint':return frame(point(g[0]),A.Vector(0,0,1))
     if kind=='ThreePlanesPoint':
         origin,direction=plane_intersection(g[0],g[1]);p,n=plane(g[2]);den=n.dot(direction)
-        if abs(den)<1e-10:raise ValueError('Tři roviny nemají jediný společný bod.')
+        if abs(den)<1e-10:raise ValueError(tr("The three planes have no unique common point."))
         return frame(origin+direction*n.dot(p-origin)/den,A.Vector(0,0,1))
     if kind=='TwoEdgesPoint':
         a,u=line(g[0]);b,v=line(g[1]);cross=u.cross(v);den=cross.dot(cross)
-        if den<1e-12:raise ValueError('Rovnoběžné hrany nemají jediný průsečík.')
+        if den<1e-12:raise ValueError(tr("Parallel edges have no unique intersection."))
         p=a+u*((b-a).cross(v).dot(cross)/den)
-        if (p-b).cross(v).Length>1e-6:raise ValueError('Mimoběžné hrany nemají průsečík.')
+        if (p-b).cross(v).Length>1e-6:raise ValueError(tr("Skew edges do not intersect."))
         return frame(p,A.Vector(0,0,1))
     if kind=='EdgePlanePoint':
         edge,face=g
         p,n=plane(face)
-        if edge.ShapeType!='Edge':raise ValueError('První reference musí být hrana.')
+        if edge.ShapeType!='Edge':raise ValueError(tr("The first reference must be an edge."))
         points,curves=edge.Curve.intersectCS(Part.Plane(p,n))
-        if len(points)!=1 or curves:raise ValueError('Hrana a rovina musí mít právě jeden průsečík (včetně prodloužení).')
+        if len(points)!=1 or curves:raise ValueError(tr("The edge and plane must have exactly one intersection (including extensions)."))
         return frame(A.Vector(points[0].X,points[0].Y,points[0].Z),n)
     if kind=='CenterPoint':
         surface=g[0].Curve if g[0].ShapeType=='Edge' else g[0].Surface if g[0].ShapeType=='Face' else None
-        if not isinstance(surface,(Part.Circle,Part.Sphere,Part.Toroid)):raise ValueError('Vyber kružnici, kulovou nebo toroidální stěnu.')
+        if not isinstance(surface,(Part.Circle,Part.Sphere,Part.Toroid)):raise ValueError(tr("Select a circle, spherical face or toroidal face."))
         return frame(surface.Center,A.Vector(0,0,1))
-    raise ValueError('Neznámá konstrukce '+kind)
+    raise ValueError(tr("Unknown construction ")+kind)
 
 
 def plane_size(references,location,fallback):
@@ -284,21 +285,21 @@ def create(doc,kind,references,options,obj=None):
     options=dict(options)
     options.setdefault('SizeMode',getattr(obj,'SizeMode','Manual') if obj else 'Automatic')
     options=dict(DEFAULTS,**options)
-    if options['SizeMode'] not in ('Automatic','Manual'):raise ValueError('Velikost zobrazení musí být Automatic nebo Manual.')
-    if not math.isfinite(options['Size']) or options['Size']<=0:raise ValueError('Velikost zobrazení musí být kladné konečné číslo.')
+    if options['SizeMode'] not in ('Automatic','Manual'):raise ValueError(tr("Display size must be Automatic or Manual."))
+    if not math.isfinite(options['Size']) or options['Size']<=0:raise ValueError(tr("Display size must be a positive finite number."))
     # App::PropertyAngle clamps silently outside this range. Reject before
     # adding or editing geometry so the requested and stored angles agree.
     if kind in ('AnglePlane','TangentPlane','UCS') and not -360<=options['Angle']<=360:
-        raise ValueError('Úhel musí být v rozsahu −360° až +360°.')
+        raise ValueError(tr("The angle must be between −360° and +360°."))
     location=placement(kind,references,options) # Validate before adding or editing.
     common,parent=reference_context(references)
     native=NATIVE.get(kind) if common else None
     if obj is not None:
         if obj.getParentGeoFeatureGroup()!=parent:
-            raise ValueError('Změna rodičovského souřadnicového systému vyžaduje novou konstrukci; existující odkazy zůstanou zachované.')
+            raise ValueError(tr("Changing the parent coordinate system requires a new construction; existing references will be preserved."))
         native=NATIVE.get(kind) if not isinstance(getattr(obj,'Proxy',None),Construction) else None
         if kind=='OffsetPlane' and native and not common:
-            raise ValueError('Pro reference z různých souřadnicových systémů vytvoř novou rovinu; původní vazby zůstanou zachované.')
+            raise ValueError(tr("Create a new plane for references from different coordinate systems; the original links will be preserved."))
     if obj is None:
         type_id='PartDesign::'+native[0] if native else 'PartDesign::FeaturePython' if parent and parent.TypeId=='PartDesign::Body' else 'Part::FeaturePython'
         obj=doc.addObject(type_id,kind)

@@ -1,4 +1,5 @@
 """Compact presentation of Sketcher's native, transactional dimension editor."""
+from fusionflow_i18n import tr
 import FreeCAD as App
 import FreeCADGui as Gui
 from PySide import QtCore as C, QtGui as G, QtWidgets as W
@@ -53,15 +54,15 @@ class DimensionEditor(C.QObject):
         row=W.QWidget(dialog);line=W.QHBoxLayout(row)
         line.setContentsMargins(0,0,0,0);line.setSpacing(4)
         field.setMinimumWidth(155);field.setButtonSymbols(W.QAbstractSpinBox.NoButtons)
-        field.setToolTip(caption.text().rstrip(':')+' · Enter: potvrdit · Esc: zrušit')
+        field.setToolTip(caption.text().rstrip(':')+tr(" · Enter: confirm · Esc: cancel"))
         line.addWidget(field,1)
-        for role,text,tip in ((W.QDialogButtonBox.Ok,'✓','Potvrdit · Enter'),
-                              (W.QDialogButtonBox.Cancel,'×','Zrušit · Esc')):
+        for role,text,tip in ((W.QDialogButtonBox.Ok,'✓',tr("Confirm · Enter")),
+                              (W.QDialogButtonBox.Cancel,'×',tr("Cancel · Esc"))):
             button=buttons.button(role);button.setText(text);button.setToolTip(tip)
             button.setFixedSize(27,27)
         line.addWidget(buttons)
         more=W.QToolButton();more.setObjectName('FusionDatumMore')
-        more.setText('⋯');more.setCheckable(True);more.setToolTip('Název parametru a referenční kóta')
+        more.setText('⋯');more.setCheckable(True);more.setToolTip(tr("Parameter name and reference dimension"))
         line.addWidget(more);outer.addWidget(row)
         details=W.QWidget(dialog);details.setObjectName('FusionDatumDetails')
         grid=W.QGridLayout(details);grid.setContentsMargins(0,0,0,0)

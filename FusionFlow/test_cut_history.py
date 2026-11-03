@@ -76,7 +76,7 @@ def run():
     try:
         read_group(f)
         raise AssertionError('Native edit overwritten')
-    except ValueError as error: assert 'mimo společný editor' in str(error)
+    except ValueError as error: assert 'outside the shared editor' in str(error)
     d.abortTransaction(); d.recompute()
     read_group(f)
     path = os.path.join(tempfile.mkdtemp(prefix='fusionflow-history-'), 'edit.FCStd')

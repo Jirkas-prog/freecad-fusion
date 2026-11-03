@@ -4,6 +4,7 @@ Metadata is deliberately not a document link: mutual links between Pockets in
 different Bodies would introduce recompute cycles. Native features own all
 geometry dependencies; the JSON only identifies the shared editing operation.
 """
+from fusionflow_i18n import tr
 import json
 import uuid
 
@@ -77,37 +78,37 @@ def read_group(feature):
                     body_of(member).Name != body_name or member.FusionFlowCut != value):
                 raise ValueError()
             if native_state(member) != data['states'][name]:
-                raise ValueError('Operace byla změněna mimo společný editor. Použij Upravit nativní Pocket; společná editace by přepsala ruční změny.')
+                raise ValueError(tr("The operation was changed outside the shared editor. Use Edit native Pocket; shared editing would overwrite manual changes."))
         return data
     except (KeyError, TypeError, AttributeError, ValueError) as error:
-        raise ValueError(str(error) or 'Chybí část společného řezu nebo jeho uložené údaje. Použij Upravit nativní Pocket.') from error
+        raise ValueError(str(error) or tr("Part of the shared cut or its saved data is missing. Use Edit native Pocket.")) from error
 
 
 def edit_cut(feature, selected, **options):
     """Caller owns the transaction and must abort on failure, as for creation."""
     data = read_group(feature)
     if not data:
-        raise ValueError('Tento řez nemá uloženou společnou historii.')
+        raise ValueError(tr("This cut has no saved shared history."))
     doc = feature.Document
     selected = list(dict.fromkeys(selected))
     if not selected:
-        raise ValueError('Nejsou vybraná žádná tělesa k odebrání. Zaškrtni je v Objects To Cut.')
+        raise ValueError(tr("No bodies selected for cutting. Check them in Objects To Cut."))
     settings = dict(data['options'], **options)
     settings['end_face'] = link_value(options['end_face']) if 'end_face' in options else settings['end_face']
     if any(settings[k] != data['options'][k] for k in ('start', 'end_face')):
-        raise ValueError('Společná editace zachovává původní profil, počátek a koncovou stěnu.')
+        raise ValueError(tr("Shared editing preserves the original profile, start and end face."))
     if settings['extent'] == 'Distance' and (settings['length'] <= 0 or
             (settings['direction'] == 'Two sides' and settings['length2'] <= 0)):
-        raise ValueError('Vzdálenost musí být kladná.')
+        raise ValueError(tr("Distance must be positive."))
     if settings['extent'] != 'Distance' and settings['direction'] != 'One side':
-        raise ValueError('Pro To object / All zvol One side.')
+        raise ValueError(tr("Choose One Side for To Object / Through All."))
     if settings['extent'] == 'To object' and not settings['end_face']:
-        raise ValueError('Řez nemá původní koncovou stěnu pro To Object.')
+        raise ValueError(tr("The cut has no original end face for To Object."))
     for name in selected:
         body = doc.getObject(name)
         base = doc.getObject(data['bases'].get(name, ''))
         if not body or not base or body.TypeId != 'PartDesign::Body' or base not in body.Group:
-            raise ValueError('Původní těleso nebo jeho výchozí krok už neexistuje: ' + name)
+            raise ValueError(tr("The original body or its starting feature no longer exists: ") + name)
     source = doc.getObject(data['source'])
     native_options = dict(settings)
     end = settings['end_face']
@@ -163,9 +164,9 @@ def edit_cut(feature, selected, **options):
     doc.recompute()
     invalid = [o.Label for o in doc.Objects if 'Invalid' in o.State and o.Name not in invalid_before]
     if invalid:
-        raise ValueError('Změna by poškodila navazující operace: ' + ', '.join(invalid) + '. Uprav rozměr nebo výběr těles.')
+        raise ValueError(tr("The change would damage dependent operations: ") + ', '.join(invalid) + tr(". Adjust the dimension or body selection."))
     if not results:
-        raise ValueError('Vysunutí neprotíná žádné vybrané těleso. Změň výběr, vzdálenost nebo směr.')
+        raise ValueError(tr("The extrusion does not intersect any selected body. Change the selection, distance or direction."))
     data['selected'], data['options'] = selected, settings
     save_group(doc, data)
     for name, visible in visibility.items():

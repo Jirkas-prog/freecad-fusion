@@ -1,0 +1,140 @@
+"""Exercise real EN/CZ controls and CAD data on a disposable profile/model."""
+import os, json, traceback
+from pathlib import Path
+assert os.environ.get('FUSIONFLOW_GUI_TEST')=='1'
+OUT=Path(os.environ['FUSIONFLOW_TEST_OUTPUT'])
+import FreeCAD as A, FreeCADGui as G, Part
+from PySide import QtCore as C, QtWidgets as W
+from PySide6 import QtTest
+
+def run():
+    checks=[]
+    try:
+        from fusionflow_i18n import tr, language
+        import fusionflow_ui as ui
+        import fusionflow_ribbon as ribbon
+        import fusionflow_browser as browser
+        from fusionflow_construct import LABELS, DEFAULTS
+        from fusionflow_construct_ui import ConstructPanel
+        from fusionflow_measure_ui import MeasurePanel
+        from fusionflow_analysis_ui import AnalysisPanel, SectionPanel
+        main=G.getMainWindow();main.resize(1440,920)
+        G.activateWorkbench('PartDesignWorkbench')
+        assert ui._installed and language()==os.environ['FUSIONFLOW_TEST_LANGUAGE']
+        assert tr('Cancel')==('Zrušit' if language()=='cs' else 'Cancel')
+        r=ribbon._ribbon
+        assert r.tabs.tabText(0)==tr('SOLID')
+        assert r.tab_names[0]=='SOLID'
+        assert r.tabs.tabText(7)==('SKICA' if language()=='cs' else 'SKETCH')
+        assert next(g for g in r.groups if g.title=='CREATE').footer.text()==('VYTVOŘIT ⌄' if language()=='cs' else 'CREATE ⌄')
+        action=r.action(ribbon.EXTRUDE,main)
+        assert action.text().split('\t')[0]==tr('Extrude')
+        assert action.data()=='FusionFlow_Extrude'
+        r.tabs.setCurrentIndex(1)
+        assert r.context=='SURFACE' and G.activeWorkbench().name()=='SurfaceWorkbench'
+        r.tabs.setCurrentIndex(0)
+        assert r.context=='SOLID' and G.activeWorkbench().name()=='PartDesignWorkbench'
+        checks.append('translated ribbon, stable commands and workbench switching')
+
+        d=A.newDocument('LanguageFixture');d.Label='Select';d.UndoMode=1
+        box=d.addObject('PartDesign::Body','Fixture');box.Label='Cut'
+        block=box.newObject('PartDesign::Feature','FixtureShape');block.Label='Cut'
+        block.Shape=Part.makeBox(4,5,6)
+        s=d.addObject('Sketcher::SketchObject','Profile');s.Label='Profile Plane'
+        points=[(0,0),(20,0),(20,10),(0,10),(0,0)]
+        for a,b in zip(points,points[1:]):s.addGeometry(Part.LineSegment(A.Vector(*a,0),A.Vector(*b,0)),False)
+        s.MakeInternals=True;d.recompute()
+        G.activeDocument().activeView().viewAxonometric()
+        G.activeDocument().activeView().fitAll()
+        browser._browser.sync()
+        assert browser._browser.items[(d.Name,'')].text(0)=='Select'
+        assert browser._browser.items[(d.Name,box.Name)].text(0)=='Cut'
+        assert browser._browser.items[(d.Name,'@bodies')].text(0)==tr('Bodies')
+        literal=ui.combo([('Cut','original'),('Select','other')])
+        assert literal.itemText(0)=='Cut' and literal.itemData(0)=='original'
+        checks.append('literal document/object labels and default combo data')
+
+        G.Selection.clearSelection();G.Selection.addSelection(s)
+        ui.open_panel(ui.ExtrudePanel);p=ui._panel;p.timer.stop()
+        assert p.cancel_button.text()==tr('Cancel')
+        assert p.sketch.itemText(p.sketch.findData(s.Name))=='Profile Plane'
+        assert p.target.itemText(p.target.findData(box.Name))=='Cut'
+        assert p.target.itemText(p.target.findData('__all__'))==tr('All bodies')
+        assert [(p.operation.itemText(i),p.operation.itemData(i)) for i in range(p.operation.count())]==[
+            (tr(label),value) for label,value in [('New Body','New body'),('Join','Join'),('Cut','Cut'),('Intersect','Intersect')]]
+        assert p.extent.itemText(p.extent.findData('All'))==tr('Through All')
+        p.auto_operation.setChecked(False);ui.selected_name(p.operation,'New body');ui.selected_name(p.extent,'Distance');p.distance.setValue(4)
+        p.timer.stop();p.preview()
+        assert p.result and abs(p.result.Shape.Volume-800)<1e-6,p.message.text()
+        assert p.accept()
+        name=p.result.Name
+        assert abs(d.getObject(name).Shape.Volume-800)<1e-6
+        d.undo();assert d.getObject(name) is None
+        d.redo();assert abs(d.getObject(name).Shape.Volume-800)<1e-6
+        assert (box.Label,s.Label,d.Label)==('Cut','Profile Plane','Select')
+        checks.append('extrusion labels, stored enum values, geometry, undo and redo')
+
+        for kind in LABELS:
+            G.Selection.clearSelection()
+            ui.open_panel(lambda k=kind:ConstructPanel(k));p=ui._panel;p.timer.stop()
+            assert p.form.windowTitle()==tr(LABELS[kind].upper())
+            values=p.options()
+            assert values['OffsetMode']=='Distance' and values['PathMode']=='Proportional'
+            assert values['BasePlane']=='XY' and values['SizeMode']=='Automatic'
+            assert p.widgets['OffsetMode'].itemText(1)==tr('To object')
+            assert p.widgets['OffsetMode'].itemData(1)=='To object'
+            p.cancel_button.click();assert p.closed
+        checks.append('all 20 construction cards, cancel and stable enum values')
+
+        G.Selection.clearSelection();G.Selection.addSelection(box)
+        ui.open_panel(MeasurePanel);p=ui._panel;p.timer.stop();p.preview()
+        assert p.cancel_button.text()==tr('Close')
+        assert p.settings()['secondary']=='None'
+        assert p.refs.item(0).text().startswith(tr('Selection %d — %s')%(1,'Cut'))
+        group=p.results.topLevelItem(0);assert group is not None,p.message.text()
+        volume=next(group.child(i) for i in range(group.childCount()) if group.child(i).text(0)==tr('Volume'))
+        value=volume.data(1,C.Qt.UserRole);assert '120' in value
+        p.copy_value(volume,1);assert W.QApplication.clipboard().text()==value
+        p.reject();assert box.Label=='Cut' and abs(box.Shape.Volume-120)<1e-6
+        checks.append('measurement, copyable numeric values and literal references')
+
+        for kind in ('CurvatureComb','CurvatureMap','Draft','Accessibility','MinimumRadius','Zebra','Environment','Isocurve','CenterOfMass','ComponentColors','MeshGroups','Interference'):
+            G.Selection.clearSelection()
+            ui.open_panel(lambda k=kind:AnalysisPanel(k));p=ui._panel;p.timer.stop()
+            assert p.curvature.currentData()=='Gaussian' and p.iso.currentData()=='UV'
+            assert p.curvature.itemText(1)==tr('Minimum')
+            p.reject()
+        ui.open_panel(SectionPanel);p=ui._panel;p.timer.stop()
+        assert p.plane.itemData(p.plane.findData('Selection'))=='Selection'
+        assert p.plane.itemText(p.plane.findData('Selection'))==tr('Selection')
+        p.reject()
+        checks.append('analysis cards and section enum values')
+
+        G.activeDocument().setEdit(s.Name);QtTest.QTest.qWait(500)
+        import fusionflow_sketch
+        palette=fusionflow_sketch._manager.palette
+        assert palette is not None,'Sketch palette missing'
+        texts=[w.text() for w in palette.findChildren(W.QLabel)]
+        assert tr('Points') in texts and tr('Linetype') in texts,texts
+        G.activeDocument().resetEdit();QtTest.QTest.qWait(100)
+        assert s.Label=='Profile Plane'
+        checks.append('native sketch edit and translated palette')
+        G.Selection.clearSelection();box.Visibility=True;block.Visibility=True
+        feature=d.getObject(name);feature.Visibility=True;ui.body_of(feature).Visibility=True;s.Visibility=False
+        G.activeDocument().activeView().viewAxonometric();G.activeDocument().activeView().fitAll()
+        QtTest.QTest.qWait(300)
+        main.grab().save(str(OUT/'preview.png'))
+        report={'passed':True,'language':language(),'checks':checks,'freecad':'.'.join(A.Version()[:3]),'qt':C.qVersion()}
+    except Exception:
+        report={'passed':False,'checks':checks,'error':traceback.format_exc()}
+    finally:
+        try:
+            import fusionflow_ui as ui
+            if ui._panel:ui._panel.reject()
+            for doc in list(A.listDocuments()):A.closeDocument(doc)
+        except Exception:pass
+        (OUT/'gui.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
+        C.QTimer.singleShot(0,W.QApplication.instance().quit)
+
+G.getMainWindow().setAttribute(C.Qt.WA_DontShowOnScreen,True)
+C.QTimer.singleShot(7000,run)

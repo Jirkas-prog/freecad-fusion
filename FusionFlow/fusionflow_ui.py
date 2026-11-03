@@ -1,4 +1,5 @@
 """Small UI layer; all saved modelling features remain native FreeCAD features."""
+from fusionflow_i18n import tr, is_input_hint
 from pathlib import Path
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -42,10 +43,10 @@ def create_sketch():
     Gui.runCommand('PartDesign_NewSketch')
 
 
-def combo(items):
+def combo(items, translate_labels=False):
     c = W.QComboBox()
     for label, data in items:
-        c.addItem(label, data)
+        c.addItem(tr(label) if translate_labels else label, data)
     return c
 
 
@@ -86,7 +87,7 @@ class PickField(W.QWidget):
         layout.addWidget(self.button)
         self.clear = W.QToolButton()
         self.clear.setText('×')
-        self.clear.setToolTip('Clear selection / Vymazat výběr')
+        self.clear.setToolTip(tr("Clear selection"))
         self.clear.clicked.connect(clear)
         layout.addWidget(self.clear)
         if menu:
@@ -94,7 +95,7 @@ class PickField(W.QWidget):
             menu.setStyleSheet(MENU_STYLE)
             more = W.QToolButton()
             more.setText('⌄')
-            more.setToolTip('Vybrat ze seznamu')
+            more.setToolTip(tr("Select from list"))
             more.setMenu(menu)
             more.setPopupMode(W.QToolButton.InstantPopup)
             layout.addWidget(more)
@@ -102,8 +103,8 @@ class PickField(W.QWidget):
         self.update_count(0)
 
     def update_count(self, count, names=''):
-        self.button.setText('%d selected' % count if count else 'Select')
-        self.button.setToolTip(names or 'Vyber kliknutím v modelu')
+        self.button.setText(tr("%d selected") % count if count else tr("Select"))
+        self.button.setToolTip(names or tr("Click in the model to select"))
         self.clear.setVisible(bool(count))
 
 
@@ -111,7 +112,7 @@ class OperationCard(W.QFrame):
     def __init__(self, title):
         super().__init__(Gui.getMainWindow())
         self.setObjectName('FusionOperationCard')
-        self.setWindowTitle(title)
+        self.setWindowTitle(tr(title))
         self.setFixedWidth(292)
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
         self.setStyleSheet('''
@@ -188,6 +189,7 @@ class Panel:
         self.original = {o.Name: (o.Visibility, getattr(o.ViewObject, 'Transparency', None))
                          for o in self.doc.Objects if hasattr(o, 'Visibility')}
         self.original_internals = {o.Name: o.MakeInternals for o in self.doc.Objects if o.TypeId == 'Sketcher::SketchObject'}
+        title = tr(title)
         self.form = OperationCard(title)
         self.layout = W.QVBoxLayout(self.form)
         self.layout.setContentsMargins(10, 6, 10, 8)
@@ -217,10 +219,11 @@ class Panel:
         self.info = W.QLabel('ⓘ')
         footer.addWidget(self.info)
         footer.addStretch()
-        self.ok = W.QPushButton('OK')
+        self.ok = W.QPushButton(tr("OK"))
         self.ok.setEnabled(False)
         self.ok.clicked.connect(self.accept)
-        cancel = W.QPushButton('Cancel')
+        cancel = W.QPushButton(tr("Cancel"))
+        self.cancel_button = cancel
         cancel.clicked.connect(self.reject)
         footer.addWidget(self.ok)
         footer.addWidget(cancel)
@@ -304,13 +307,13 @@ class Panel:
             self.transaction = True
             self.transaction_id = App.getActiveTransaction()[1]
             self.result = self.build()
-            self.message.setText('Náhled je platný. OK uloží operaci, Cancel ji zruší.')
+            self.message.setText(tr("The preview is valid. OK saves the operation; Cancel discards it."))
             self.message.hide()
         except Exception as exc:
             self.rollback()
             self.message.setStyleSheet('color:#f2bb82')
             self.message.setText(str(exc))
-            self.message.setVisible(not str(exc).startswith(('Vyber', 'Nejprve', 'Vzdálenost musí')))
+            self.message.setVisible(not is_input_hint(str(exc)))
         finally:
             self.busy = False
             self.ok.setEnabled(self.result is not None)
@@ -401,73 +404,73 @@ class ExtrudePanel(Panel):
             button.setCheckable(True)
             button.setChecked(label == 'Solid')
             button.setEnabled(label == 'Solid')
-            button.setToolTip(label if label == 'Solid' else 'Thin Extrude zatím není implementováno.')
+            button.setToolTip(tr(label) if label == 'Solid' else tr("Thin Extrude is not implemented yet."))
             kinds.addWidget(button)
         kinds.addStretch()
-        self.fields.addRow('Type', kind)
+        self.fields.addRow(tr("Type"), kind)
         self.profile_menu = W.QMenu()
         self.profile_menu.aboutToShow.connect(self.profiles_menu)
         self.pick = PickField(self.pick_profiles, self.clear_profiles, self.profile_menu)
-        self.fields.addRow('Profiles', self.pick)
-        self.start = self.row('Start', combo([('Profile Plane', 'plane'), ('Offset', 'offset')]))
-        self.offset = self.row('Start offset', number())
-        self.direction = self.row('Direction', combo([(label, data) for label, data in [('One Side','One side'), ('Two Sides','Two sides'), ('Symmetric','Symmetric')]]))
+        self.fields.addRow(tr("Profiles"), self.pick)
+        self.start = self.row(tr("Start"), combo([('Profile Plane', 'plane'), ('Offset', 'offset')], translate_labels=True))
+        self.offset = self.row(tr("Start offset"), number())
+        self.direction = self.row(tr("Direction"), combo([(label, data) for label, data in [('One Side','One side'), ('Two Sides','Two sides'), ('Symmetric','Symmetric')]], translate_labels=True))
         self.reverse = W.QCheckBox(self.form)
         self.reverse.hide()
         self.reverse.toggled.connect(self.schedule)
-        self.extent = self.row('Extent Type', combo([('Distance','Distance'), ('To Object','To object'), ('All','All')]))
-        self.distance = self.row('Distance', number(0))
-        self.distance.setToolTip('Záporná vzdálenost otočí směr vysunutí.')
-        self.distance2 = self.row('Distance 2', number(0))
-        self.taper = self.row('Taper Angle', number(0, True))
-        self.taper2 = self.row('Taper Angle 2', number(0, True))
+        self.extent = self.row(tr("Extent Type"), combo([('Distance','Distance'), ('To Object','To object'), ('Through All','All')], translate_labels=True))
+        self.distance = self.row(tr("Distance"), number(0))
+        self.distance.setToolTip(tr("A negative distance reverses the extrusion direction."))
+        self.distance2 = self.row(tr("Distance 2"), number(0))
+        self.taper = self.row(tr("Taper Angle"), number(0, True))
+        self.taper2 = self.row(tr("Taper Angle 2"), number(0, True))
         for field in (self.taper,self.taper2):
-            field.setToolTip('Úkos: kladný úhel rozšiřuje profil, záporný jej zužuje. Pro Distance lze úhel měnit i kruhovým úchopem na oblouku u šipky.')
+            field.setToolTip(tr("Taper: a positive angle expands the profile; a negative angle narrows it. For Distance, the angle can also be changed with the circular handle on the arc beside the arrow."))
         self.end = None
         self.end_button = PickField(self.pick_end, self.clear_end)
-        self.fields.addRow('To object', self.end_button)
-        self.end_offset = self.row('End offset', number())
-        self.operation = combo([('New Body','New body'), ('Join','Join'), ('Cut','Cut'), ('Intersect','Intersect')])
+        self.fields.addRow(tr("To object"), self.end_button)
+        self.end_offset = self.row(tr("End offset"), number())
+        self.operation = combo([('New Body','New body'), ('Join','Join'), ('Cut','Cut'), ('Intersect','Intersect')], translate_labels=True)
         operation_row = W.QWidget()
         operation_layout = W.QHBoxLayout(operation_row)
         operation_layout.setContentsMargins(0,0,0,0)
         operation_layout.setSpacing(5)
         operation_layout.addWidget(self.operation,1)
-        self.auto_operation = W.QCheckBox('Auto')
+        self.auto_operation = W.QCheckBox(tr("Auto"))
         self.auto_operation.setChecked(True)
-        self.auto_operation.setToolTip('Automaticky: průnik → Cut, společná stěna → Join, jinak New Body. Ruční výběr automatiku vypne.')
+        self.auto_operation.setToolTip(tr("Automatic: intersection → Cut, shared face → Join, otherwise New Body. Manual selection disables this behaviour."))
         self.auto_operation.toggled.connect(self.schedule)
         operation_layout.addWidget(self.auto_operation)
-        self.fields.addRow('Operation',operation_row)
+        self.fields.addRow(tr("Operation"),operation_row)
         for index, name in enumerate(('box','boolean_join','boolean_cut','boolean_intersect')):
             self.operation.setItemIcon(index, cad_icon(name))
         bodies = [o for o in self.doc.Objects if o.TypeId == 'PartDesign::Body' and o.Tip and o.Shape.Solids]
-        self.target = combo([('Select', ''), ('All bodies', '__all__')]+[(o.Label, o.Name) for o in bodies])
+        self.target = combo([(tr('Select'), ''), (tr('All bodies'), '__all__')]+[(o.Label, o.Name) for o in bodies])
         self.target.setParent(self.form)
         self.target.hide()
         self.target.currentIndexChanged.connect(self.target_changed)
         self.target_menu = W.QMenu()
         self.target_menu.aboutToShow.connect(self.targets_menu)
         self.target_pick = PickField(lambda:self.begin_pick('target'), lambda:self.target.setCurrentIndex(0), self.target_menu)
-        self.fields.addRow('Target Body', self.target_pick)
+        self.fields.addRow(tr("Target Body"), self.target_pick)
         self.cut_affected = None
         self.cut_section = W.QWidget()
         cut_layout = W.QVBoxLayout(self.cut_section)
         cut_layout.setContentsMargins(0,4,0,0);cut_layout.setSpacing(4)
         self.cut_header = W.QToolButton()
         self.cut_header.setObjectName('ObjectsToCut')
-        self.cut_header.setText('Objects To Cut')
+        self.cut_header.setText(tr("Objects To Cut"))
         self.cut_header.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         self.cut_header.setArrowType(QtCore.Qt.RightArrow);self.cut_header.setCheckable(True)
         self.cut_header.setStyleSheet('QToolButton {border:0;font-weight:600;} QToolButton:checked {background:transparent;border:0;}')
-        self.cut_header.setToolTip('Rozbalit seznam těles. Odškrtni tělesa, která má řez vynechat.')
+        self.cut_header.setToolTip(tr("Expand the body list. Uncheck bodies the cut should skip."))
         cut_layout.addWidget(self.cut_header)
         self.cut_details = W.QWidget()
         details = W.QVBoxLayout(self.cut_details);details.setContentsMargins(0,0,0,0);details.setSpacing(3)
         controls = W.QHBoxLayout()
         for label,checked in [('All',True),('None',False)]:
-            button=W.QToolButton();button.setText(label);button.setObjectName('CutSelect'+label)
-            button.setToolTip('Zaškrtnout všechna tělesa' if checked else 'Odškrtnout všechna tělesa')
+            button=W.QToolButton();button.setText(tr(label));button.setObjectName('CutSelect'+label)
+            button.setToolTip(tr("Check all bodies") if checked else tr("Uncheck all bodies"))
             button.clicked.connect(lambda _,on=checked:self.select_cut_bodies(on));controls.addWidget(button)
         controls.addStretch();details.addLayout(controls)
         self.cut_list = W.QListWidget();self.cut_list.setObjectName('ObjectsToCutList')
@@ -555,7 +558,7 @@ class ExtrudePanel(Panel):
         # moving its binder needs a separate reference-remapping workflow.
         for widget in (self.pick, self.start, self.offset, self.end_button, self.operation, self.auto_operation):
             widget.setEnabled(False)
-            widget.setToolTip('Společná editace zachovává původní profil, počátek, koncovou stěnu a operaci Cut.')
+            widget.setToolTip(tr("Shared editing preserves the original profile, start, end face and Cut operation."))
         if not self.end:
             self.extent.model().item(self.extent.findData('To object')).setEnabled(False)
         with QtCore.QSignalBlocker(self.cut_list):
@@ -573,7 +576,7 @@ class ExtrudePanel(Panel):
         self.cut_header.setChecked(True)
         self.fields.setRowVisible(self.kind_field, False)
         self.fields.setRowVisible(self.operation.parentWidget(), False)
-        self.cut_header.setToolTip('Společná editace uloženého řezu. Odškrtnutí potlačí původní krok.\nSeznam obsahuje tělesa z doby vytvoření řezu, včetně původně vynechaných.')
+        self.cut_header.setToolTip(tr("Shared editing of a saved cut. Unchecking suppresses the original feature.\nThe list includes bodies present when the cut was created, including originally excluded bodies."))
         self.pick_mode = None
         self.busy = False
 
@@ -636,10 +639,10 @@ class ExtrudePanel(Panel):
         for index in range(self.sketch.count()):
             sk = self.doc.getObject(self.sketch.itemData(index))
             menu = self.profile_menu.addMenu(sk.Label)
-            action = menu.addAction('Use this sketch')
+            action = menu.addAction(tr("Use this sketch"))
             action.triggered.connect(lambda checked=False, i=index:self.use_sketch(i))
             for face in range(len(sk.InternalShape.Faces)):
-                action = menu.addAction('Profile %d' % (face+1))
+                action = menu.addAction(tr("Profile %d") % (face+1))
                 action.setCheckable(True)
                 current = index == self.sketch.currentIndex()
                 action.setChecked(current and self.regions.item(face).checkState() == QtCore.Qt.Checked)
@@ -702,8 +705,8 @@ class ExtrudePanel(Panel):
         self.pick.button.setChecked(self.pick_mode == 'profiles')
         self.target_pick.update_count(bool(self.target.currentData()), self.target.currentText())
         if self.target.currentData() == '__all__':
-            self.target_pick.button.setText('All bodies')
-            self.target_pick.button.setToolTip('Odebere ze všech protínaných Part Design těles v dokumentu, včetně skrytých.')
+            self.target_pick.button.setText(tr("All bodies"))
+            self.target_pick.button.setToolTip(tr("Cuts all intersecting Part Design bodies in the document, including hidden ones."))
         self.target_pick.button.setChecked(self.pick_mode == 'target')
         self.end_button.update_count(bool(self.end), ' · '.join(self.end) if self.end else '')
         self.end_button.button.setChecked(self.pick_mode == 'end')
@@ -711,17 +714,17 @@ class ExtrudePanel(Panel):
         self.fields.setRowVisible(self.target_pick,self.operation.currentData() in ('Join','Intersect'))
         self.cut_section.setVisible(cut)
         names=self.selected_cut_names()
-        self.cut_header.setText('Objects To Cut · %d / %d'%(len(names),self.cut_list.count()))
-        self.cut_status.setText(('Zasaženo %d z %d vybraných těles.'%(len(self.cut_affected),len(names)))
-            if self.cut_affected is not None else 'Žádné těleso není vybrané.' if not names else 'Vybraná tělesa zahrnují i skrytá. Řez se provede jen při průniku.')
+        self.cut_header.setText(tr("Objects To Cut · %d / %d")%(len(names),self.cut_list.count()))
+        self.cut_status.setText((tr("Intersects %d of %d selected bodies.")%(len(self.cut_affected),len(names)))
+            if self.cut_affected is not None else tr("No body is selected.") if not names else tr("Selected bodies include hidden ones. A cut is made only where they intersect."))
         with QtCore.QSignalBlocker(self.cut_list):
             for i in range(self.cut_list.count()):
                 entry=self.cut_list.item(i);name=entry.data(QtCore.Qt.UserRole)
                 label=entry.data(QtCore.Qt.UserRole+1)
-                status='vynecháno' if name not in names else 'mimo řez' if self.cut_affected is not None and name not in self.cut_affected else ''
+                status=tr("excluded") if name not in names else tr("outside the cut") if self.cut_affected is not None and name not in self.cut_affected else ''
                 entry.setText(label+(' · '+status if status else ''))
                 entry.setForeground(QtGui.QColor('#9fadbd' if name not in names else '#e7edf5'))
-                entry.setToolTip(label+'\n'+name+(' · původně skryté těleso' if not self.original.get(name,(True,))[0] else '')+'\n'+(status or 'Vybráno k odebrání'))
+                entry.setToolTip(label+'\n'+name+(tr(" · originally hidden body") if not self.original.get(name,(True,))[0] else '')+'\n'+(status or tr("Selected for cutting")))
 
     def clear_profiles(self):
         self.face_source = None
@@ -760,10 +763,10 @@ class ExtrudePanel(Panel):
             self.doc.recompute()
             count = len(obj.InternalShape.Faces)
             for i, face in enumerate(obj.InternalShape.Faces, 1):
-                item = W.QListWidgetItem('Oblast %d   ·   %.1f mm²' % (i, face.Area), self.regions)
+                item = W.QListWidgetItem(tr("Region %d   ·   %.1f mm²") % (i, face.Area), self.regions)
                 item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
                 item.setCheckState(QtCore.Qt.Checked if count == 1 else QtCore.Qt.Unchecked)
-            self.message.setText('Klikni na uzavřenou oblast skici nebo ji zaškrtni v seznamu. Ctrl přidává oblasti.')
+            self.message.setText(tr("Click a closed sketch region or check it in the list. Ctrl adds regions."))
         self.busy = False
         self.schedule()
 
@@ -776,7 +779,7 @@ class ExtrudePanel(Panel):
         if owner:
             owner.Visibility = True
         obj.Visibility = True
-        self.message.setText('Klikni na rovinnou stěnu nebo dovnitř oblasti skici. Ctrl přidává další výběr.')
+        self.message.setText(tr("Click a planar face or inside a sketch region. Ctrl adds to the selection."))
 
     def addSelection(self, *_):
         if self.closed or self.busy or self.edit_name:
@@ -822,7 +825,7 @@ class ExtrudePanel(Panel):
         self.sync_picks()
         sk, regions = self.profile()
         if not sk:
-            raise ValueError('Vyber rovinnou stěnu nebo uzavřenou oblast skici.')
+            raise ValueError(tr("Select a planar face or closed sketch region."))
         options = dict(length=abs(self.distance.value()), length2=self.distance2.value(), direction=self.direction.currentData(),
                        reverse=self.reverse.isChecked() != (self.distance.value() < 0),
                        start=self.offset.value() if self.start.currentData() == 'offset' else 0,
@@ -859,7 +862,7 @@ class CombinePanel(Panel):
         super().__init__('COMBINE')
         self.pick_mode = 'target'
         bodies = [o for o in self.doc.Objects if o.TypeId == 'PartDesign::Body' and o.Tip and not o.Shape.isNull()]
-        self.target = combo([('Select','')]+[(o.Label, o.Name) for o in bodies])
+        self.target = combo([(tr('Select'),'')]+[(o.Label, o.Name) for o in bodies])
         self.target.setParent(self.form)
         self.target.hide()
         self.tools = W.QListWidget(self.form)
@@ -875,9 +878,9 @@ class CombinePanel(Panel):
         self.tools_menu.aboutToShow.connect(lambda:self.selection_menu('tools'))
         self.target_pick = PickField(lambda:self.begin_pick('target'), self.clear_target, self.target_menu)
         self.tools_pick = PickField(lambda:self.begin_pick('tools'), self.clear_tools, self.tools_menu)
-        self.fields.addRow('Target Body', self.target_pick)
-        self.fields.addRow('Tool Bodies', self.tools_pick)
-        self.operation = combo([(v, v) for v in ('Join', 'Cut', 'Intersect')])
+        self.fields.addRow(tr("Target Body"), self.target_pick)
+        self.fields.addRow(tr("Tool Bodies"), self.tools_pick)
+        self.operation = combo([(v, v) for v in ('Join', 'Cut', 'Intersect')], translate_labels=True)
         self.operation.setParent(self.form)
         self.operation.hide()
         operations = W.QWidget()
@@ -888,7 +891,7 @@ class CombinePanel(Panel):
         for index, (label, picture) in enumerate([('Join','boolean_join'),('Cut','boolean_cut'),('Intersect','boolean_intersect')]):
             button = W.QToolButton()
             button.setIcon(cad_icon(picture))
-            button.setToolTip(label)
+            button.setToolTip(tr(label))
             button.setAccessibleName(label)
             button.setCheckable(True)
             button.setChecked(index == 0)
@@ -896,8 +899,8 @@ class CombinePanel(Panel):
             buttons.addWidget(button)
             self.operation_buttons.append(button)
         buttons.addStretch()
-        self.fields.addRow('Operation', operations)
-        self.keep = self.row('Keep Tools', W.QCheckBox())
+        self.fields.addRow(tr("Operation"), operations)
+        self.keep = self.row(tr("Keep Tools"), W.QCheckBox())
         picked = []
         for obj, _ in selection():
             body = body_of(obj)
@@ -1010,7 +1013,7 @@ def open_panel(kind):
     if _panel:
         _panel.reject()
     if Gui.activeDocument().getInEdit() or Gui.Control.activeDialog():
-        W.QMessageBox.information(Gui.getMainWindow(), 'FusionFlow', 'Nejprve dokonči nebo zruš právě otevřenou operaci.')
+        W.QMessageBox.information(Gui.getMainWindow(), 'FusionFlow', tr("Finish or cancel the current operation first."))
         return
     if _timeline:
         _timeline.end_preview()
@@ -1036,7 +1039,7 @@ def edit_feature(obj, native=False):
         try:
             open_panel(lambda: ExtrudePanel(obj))
         except ValueError as error:
-            W.QMessageBox.warning(Gui.getMainWindow(), 'Extrude · společná editace', str(error))
+            W.QMessageBox.warning(Gui.getMainWindow(), tr("Extrude · shared editing"), str(error))
         return True
     owner = body_of(obj)
     if owner:
@@ -1072,7 +1075,7 @@ class HistoryList(W.QListWidget):
         self.history_position = 0
         self.dragging_marker = False
         self.setMouseTracking(True)
-        self.setToolTip('Přetáhni svislou značku pro náhled mezistavu modelu. Dvojklik na ikonu upraví operaci.')
+        self.setToolTip(tr("Drag the vertical marker to preview an intermediate model state. Double-click an icon to edit its operation."))
 
     def marker_x(self, position=None):
         position = self.history_position if position is None else position
@@ -1119,7 +1122,7 @@ class HistoryList(W.QListWidget):
 
 class Timeline(W.QDockWidget):
     def __init__(self):
-        super().__init__('History / Historie', Gui.getMainWindow())
+        super().__init__(tr("History"), Gui.getMainWindow())
         self.setObjectName('FusionFlowHistory')
         self.setMaximumHeight(120)
         self.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
@@ -1135,11 +1138,11 @@ class Timeline(W.QDockWidget):
         self.list.setSpacing(3)
         layout.addWidget(self.list, 1)
         buttons = W.QVBoxLayout()
-        self.ghost = W.QCheckBox('Náhled kroku')
-        self.ghost.setToolTip('Zobrazí tvar po vybraném kroku. Nemění Tip ani pořadí operací.')
+        self.ghost = W.QCheckBox(tr("Step preview"))
+        self.ghost.setToolTip(tr("Shows the shape after the selected step. Does not change Tip or the operation order."))
         self.ghost.toggled.connect(self.preview_selected)
         buttons.addWidget(self.ghost)
-        end = W.QPushButton('Konec historie')
+        end = W.QPushButton(tr("End of history"))
         end.clicked.connect(self.end_preview)
         buttons.addWidget(end)
         layout.addLayout(buttons)
@@ -1197,9 +1200,9 @@ class Timeline(W.QDockWidget):
                 icon = QtGui.QIcon(icon.pixmap(28, 28, QtGui.QIcon.Disabled))
             item = W.QListWidgetItem(icon, '%d  %s' % (i, obj.Label), self.list)
             item.setData(QtCore.Qt.UserRole, obj.Name)
-            item.setToolTip(inspect.tooltip(obj,findings[obj.Name])+'\nDvojklik: upravit parametrickou operaci\nPravé tlačítko: diagnostika, vstupy a navazující operace')
+            item.setToolTip(inspect.tooltip(obj,findings[obj.Name])+tr("\nDouble-click: edit the parametric operation\nRight-click: diagnostics, inputs and dependent operations"))
             if getattr(obj, 'FusionFlowCut', ''):
-                item.setToolTip(item.toolTip()+'\nSpolečný Extrude Cut: dvojklik upraví všechna tělesa této operace.'+('\nPotlačeno: těleso je z řezu vynechané.' if obj.Suppressed else ''))
+                item.setToolTip(item.toolTip()+tr("\nShared Extrude Cut: double-click to edit all bodies in this operation.")+(tr("\nSuppressed: this body is excluded from the cut.") if obj.Suppressed else ''))
             if 'Invalid' in obj.State:
                 item.setForeground(QtGui.QColor('#c43b32'))
             if obj.Name == selected:
@@ -1278,11 +1281,11 @@ class Timeline(W.QDockWidget):
         menu.setStyleSheet(MENU_STYLE)
         menu.setToolTipsVisible(True)
         inspect.add_diagnostics(menu,self.obj(item))
-        menu.addAction('Edit / Upravit operaci',lambda:self.edit(item))
+        menu.addAction(tr("Edit operation"),lambda:self.edit(item))
         if getattr(self.obj(item), 'FusionFlowCut', ''):
-            menu.addAction('Upravit nativní Pocket', lambda:edit_feature(self.obj(item), native=True))
-        menu.addAction('Náhled po tomto kroku',lambda:self.go_to(self.list.row(item)+1))
-        menu.addAction('Konec historie',self.end_preview)
+            menu.addAction(tr("Edit native Pocket"), lambda:edit_feature(self.obj(item), native=True))
+        menu.addAction(tr("Preview after this step"),lambda:self.go_to(self.list.row(item)+1))
+        menu.addAction(tr("End of history"),self.end_preview)
         menu.addSeparator();inspect.add_relations(menu,self.obj(item))
         menu.exec(self.list.mapToGlobal(point))
         menu.deleteLater()
@@ -1311,7 +1314,7 @@ class Command:
         self.text, self.callback, self.icon, self.tip, self.always = text, callback, icon, tip, always
 
     def GetResources(self):
-        return {'MenuText': self.text, 'ToolTip': self.tip or self.text, 'Pixmap': icons.icon_path(self.icon)}
+        return {'MenuText': tr(self.text), 'ToolTip': tr(self.tip or self.text), 'Pixmap': icons.icon_path(self.icon)}
 
     def Activated(self):
         self.callback()
@@ -1346,9 +1349,9 @@ def search_entries():
                 if len(entry) == 2:
                     yield from flatten(entry[1])
                 elif entry[1] and entry[1] in Gui.listCommands():
-                    yield entry[1], entry[0] + ('  ·  '+entry[3] if entry[3] else '')
+                    yield entry[1], tr(entry[0]) + ('  ·  '+entry[3] if entry[3] else '')
         return list(dict(flatten(SKETCH_CREATE + SKETCH_MODIFY + CONSTRAINTS + [FINISH])).items())
-    return [('FusionFlow_CreateSketch', 'Create Sketch / Nová skica'), ('FusionFlow_Extrude', 'Extrude / Vysunutí'), ('FusionFlow_Combine', 'Combine / Spojit, odebrat, průnik'), ('PartDesign_Fillet', 'Fillet / Zaoblení'), ('PartDesign_Chamfer', 'Chamfer / Zkosení'), ('PartDesign_Hole', 'Hole / Díra'), ('PartDesign_Thickness', 'Shell / Skořepina'), ('PartDesign_Revolution', 'Revolve / Orotování'), ('PartDesign_AdditivePipe', 'Sweep / Tažení'), ('PartDesign_AdditiveLoft', 'Loft'), ('PartDesign_LinearPattern', 'Rectangular pattern'), ('PartDesign_PolarPattern', 'Circular pattern'), ('PartDesign_Draft', 'Draft / Úkos'), ('Std_Measure', 'Measure / Měření')]
+    return [('FusionFlow_CreateSketch', tr("Create Sketch")), ('FusionFlow_Extrude', tr("Extrude")), ('FusionFlow_Combine', tr("Combine")), ('PartDesign_Fillet', tr("Fillet")), ('PartDesign_Chamfer', tr("Chamfer")), ('PartDesign_Hole', tr("Hole")), ('PartDesign_Thickness', tr("Shell")), ('PartDesign_Revolution', tr("Revolve")), ('PartDesign_AdditivePipe', tr("Sweep")), ('PartDesign_AdditiveLoft', 'Loft'), ('PartDesign_LinearPattern', 'Rectangular pattern'), ('PartDesign_PolarPattern', 'Circular pattern'), ('PartDesign_Draft', tr("Draft")), ('Std_Measure', tr("Measure"))]
 
 
 def search_commands():
@@ -1356,16 +1359,16 @@ def search_commands():
     from fusionflow_ribbon import native_action
     dialog = W.QDialog(Gui.getMainWindow())
     dialog.setObjectName('FusionCommandSearch')
-    dialog.setWindowTitle('Search / Příkazy')
+    dialog.setWindowTitle(tr("Search commands"))
     dialog.resize(440, 390)
     layout = W.QVBoxLayout(dialog)
     field = W.QLineEdit()
-    field.setPlaceholderText('Line, Rectangle, Dimension, Trim…' if active_sketch() else 'Extrude, Combine, Fillet…')
+    field.setPlaceholderText(tr("Line, Rectangle, Dimension, Trim…") if active_sketch() else tr("Extrude, Combine, Fillet…"))
     layout.addWidget(field)
     entries = W.QListWidget()
     layout.addWidget(entries)
     for name, label in search_entries():
-        item = W.QListWidgetItem(label, entries)
+        item = W.QListWidgetItem(tr(label), entries)
         item.setData(QtCore.Qt.UserRole, name)
         item.setIcon(icons.command_icon(name,small=True))
         action = native_action(name)
@@ -1411,18 +1414,18 @@ def toolbar(name, commands):
         else:
             action = actions
         if action is None:
-            action = QtGui.QAction(label, bar)
+            action = QtGui.QAction(tr(label), bar)
             action.setObjectName(name)
             action.triggered.connect(lambda checked=False, cmd=name: Gui.runCommand(cmd))
             Gui.getMainWindow().addAction(action)
         if action:
-            action.setText(label)
+            action.setText(tr(label))
             if icon:
                 action.setIcon(QtGui.QIcon(str(ROOT / 'icons' / (icon + '.svg'))))
             button = W.QToolButton(bar)
             button.setDefaultAction(action)
             button.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
-            button.setText(label)
+            button.setText(tr(label))
             bar.addWidget(button)
     Gui.getMainWindow().addToolBar(bar)
     return bar
@@ -1439,12 +1442,12 @@ def install():
     import fusionflow_construct_ui, fusionflow_navigator
     fusionflow_construct_ui.install();fusionflow_navigator.install()
     for name, command in {
-        'FusionFlow_CreateSketch': Command('Create Sketch', create_sketch, 'sketch', 'Skica na vybrané rovinné stěně; její těleso se aktivuje automaticky'),
-        'FusionFlow_Extrude': Command('Extrude', lambda: open_panel(ExtrudePanel), 'extrude', 'E · Vysunutí vybrané stěny nebo oblasti skici; Join, Cut, Intersect nebo New body'),
-        'FusionFlow_Combine': Command('Combine', lambda: open_panel(CombinePanel), 'combine', 'Cílové těleso + nástrojová tělesa; Join / Cut / Intersect'),
-        'FusionFlow_Sketches': Command('Sketches', show_sketches, 'sketch', 'Zobrazit / skrýt skici pro další použití'),
-        'FusionFlow_Search': Command('Search', search_commands, 'search', 'S · Vyhledání příkazu'),
-        'FusionFlow_Move': Command('Move / Copy', move_context, 'move', 'M · Přesun geometrie skici nebo tělesa'),
+        'FusionFlow_CreateSketch': Command('Create Sketch', create_sketch, 'sketch', tr("Sketch on the selected planar face; its body activates automatically")),
+        'FusionFlow_Extrude': Command('Extrude', lambda: open_panel(ExtrudePanel), 'extrude', tr("E · Extrude the selected face or sketch region; Join, Cut, Intersect or New Body")),
+        'FusionFlow_Combine': Command('Combine', lambda: open_panel(CombinePanel), 'combine', tr("Target body + tool bodies; Join / Cut / Intersect")),
+        'FusionFlow_Sketches': Command('Sketches', show_sketches, 'sketch', tr("Show / hide sketches for reuse")),
+        'FusionFlow_Search': Command('Search', search_commands, 'search', tr("S · Find a command")),
+        'FusionFlow_Move': Command('Move / Copy', move_context, 'move', tr("M · Move sketch geometry or a body")),
     }.items():
         Gui.addCommand(name, command)
     from freecad_fusion import presets
@@ -1498,7 +1501,7 @@ def install():
     fusionflow_browser.install()
     App.ParamGet('User parameter:BaseApp/Preferences/Mod/Sketcher').SetBool('MakeInternals', True)
     App.ParamGet('User parameter:BaseApp/Preferences/General').SetString('AutoloadModule', 'PartDesignWorkbench')
-    App.Console.PrintMessage('FusionFlow připraven: E Extrude, S Search, Combine, History.\n')
+    App.Console.PrintMessage(tr("FusionFlow ready: E Extrude, S Search, Combine, History.\n"))
 
 
 def bind_shortcuts():

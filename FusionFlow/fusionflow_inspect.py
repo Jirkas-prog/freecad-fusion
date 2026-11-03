@@ -1,14 +1,15 @@
 """Read-only model diagnostics and navigation shared by browser and history."""
+from fusionflow_i18n import tr
 import FreeCAD as App
 import FreeCADGui as Gui
 from PySide import QtCore as C, QtWidgets as W
 import fusionflow_icons as icons
 
 CHECKS = (
-    ('ConflictingConstraints', 2, 'Konfliktní vazby', 'Sketcher_SelectConflictingConstraints'),
-    ('MalformedConstraints', 2, 'Neplatné vazby', 'Sketcher_SelectMalformedConstraints'),
-    ('RedundantConstraints', 1, 'Nadbytečné vazby', 'Sketcher_SelectRedundantConstraints'),
-    ('PartiallyRedundantConstraints', 1, 'Částečně nadbytečné vazby', 'Sketcher_SelectPartiallyRedundantConstraints'),
+    ('ConflictingConstraints', 2, tr("Conflicting constraints"), 'Sketcher_SelectConflictingConstraints'),
+    ('MalformedConstraints', 2, tr("Invalid constraints"), 'Sketcher_SelectMalformedConstraints'),
+    ('RedundantConstraints', 1, tr("Redundant constraints"), 'Sketcher_SelectRedundantConstraints'),
+    ('PartiallyRedundantConstraints', 1, tr("Partially redundant constraints"), 'Sketcher_SelectPartiallyRedundantConstraints'),
 )
 
 
@@ -24,9 +25,9 @@ def diagnostics(obj):
                 notes.append('%s (%d)' % (label, len(findings)))
         if obj.DoF < 0 and not notes:
             level = 2
-            notes.append('Skicu nelze vyřešit')
+            notes.append(tr("The sketch cannot be solved"))
     if 'Invalid' in obj.State:
-        notes.append(obj.getStatusString().strip() or 'Přepočet objektu selhal')
+        notes.append(obj.getStatusString().strip() or tr("Object recomputation failed"))
     return level, tuple(dict.fromkeys(notes))
 
 
@@ -36,8 +37,8 @@ def tooltip(obj, result=None):
     if notes:
         text += '\n' + '\n'.join(notes)
     elif obj.TypeId == 'Sketcher::SketchObject':
-        text += '\n' + ('Prázdná skica' if not obj.GeometryCount else
-                        'Plně zavazbená skica' if obj.DoF == 0 else 'Stupně volnosti: %d' % obj.DoF)
+        text += '\n' + (tr("Empty sketch") if not obj.GeometryCount else
+                        tr("Fully constrained sketch") if obj.DoF == 0 else tr("Degrees of freedom: %d") % obj.DoF)
     return text
 
 
@@ -139,12 +140,12 @@ def add_diagnostics(menu, obj):
         return
     identity = key(obj)
     action = menu.addAction(icons.icon('status_error' if level == 2 else 'status_warning', True),
-                            'Otevřít diagnostiku', lambda: edit_diagnostic(identity))
+                            tr("Open diagnostics"), lambda: edit_diagnostic(identity))
     action.setToolTip('\n'.join(notes));action.setEnabled(can_edit(obj))
     if obj.TypeId == 'Sketcher::SketchObject':
         for attr, severity, label, command in CHECKS:
             if getattr(obj, attr):
-                action = menu.addAction('Vybrat: ' + label.lower(),
+                action = menu.addAction(tr("Select: ") + label.lower(),
                                         lambda checked=False, c=command: edit_diagnostic(identity, c))
                 action.setEnabled(can_edit(obj))
     menu.addSeparator()
@@ -152,10 +153,10 @@ def add_diagnostics(menu, obj):
 
 def add_relations(menu, obj):
     inputs, outputs = relations(obj)
-    groups = [('Vstupy', inputs), ('Použito v', outputs)]
+    groups = [(tr("Inputs"), inputs), (tr("Used by"), outputs)]
     if obj.TypeId == 'PartDesign::Body':
-        groups[0] = ('Poslední operace', inputs)
-        groups.append(('Operace tělesa', [o for o in obj.Group if o.isDerivedFrom('PartDesign::Feature')]))
+        groups[0] = (tr("Last operation"), inputs)
+        groups.append((tr("Body operations"), [o for o in obj.Group if o.isDerivedFrom('PartDesign::Feature')]))
     for title, objects in groups:
         if not objects:
             continue

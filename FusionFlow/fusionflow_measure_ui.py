@@ -1,4 +1,5 @@
 """Live measurement selection and grouped, individually copyable results."""
+from fusionflow_i18n import tr
 import json
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -24,13 +25,13 @@ class MeasurePanel(Panel):
         for n,entry in zip(numbers,loaded):self.slots[n-1]=entry
         self.pick_index=next((i for i,entry in enumerate(self.slots) if entry is None),0)
         prefs=App.ParamGet(PREF)
-        self.precision=self.row('Precision',combo([(str(i)+' decimals',i) for i in range(10)]))
+        self.precision=self.row(tr("Precision"),combo([(tr('%d decimals')%i,i) for i in range(10)]))
         selected_name(self.precision,settings.get('precision',prefs.GetInt('MeasurePrecision',3)))
-        self.secondary=self.row('Secondary units',combo([(s,s) for s in ('None','cm','m','in','ft')]))
+        self.secondary=self.row(tr("Secondary units"),combo([(s,s) for s in ('None','cm','m','in','ft')], translate_labels=True))
         selected_name(self.secondary,settings.get('secondary',prefs.GetString('MeasureSecondary','None')))
-        self.delta=self.row('XYZ Delta',combo([(s,s) for s in ('None','Global','Selection 1','Selection 2')]))
+        self.delta=self.row(tr("XYZ Delta"),combo([(s,s) for s in ('None','Global','Selection 1','Selection 2')], translate_labels=True))
         selected_name(self.delta,settings.get('delta','None'))
-        self.delta.setToolTip('Rozdíl nejbližších bodů (2 − 1). Selection 1/2 používá osy tělesa či nadřazené komponenty; bez rodiče osy objektu.')
+        self.delta.setToolTip(tr("Difference between closest points (2 − 1). Selection 1/2 uses the body or parent component axes; without a parent, it uses the object axes."))
         self.refs=W.QListWidget();self.refs.setFixedHeight(28*len(self.slots)+4)
         self.refs.itemClicked.connect(lambda item:self.choose(self.refs.row(item)))
         self.refs.currentRowChanged.connect(self.choose)
@@ -38,7 +39,7 @@ class MeasurePanel(Panel):
         self.hint=W.QLabel();self.hint.setWordWrap(True);self.fields.addRow(self.hint)
         buttons=W.QWidget();layout=W.QHBoxLayout(buttons);layout.setContentsMargins(0,0,0,0);layout.setSpacing(4)
         for label,callback in (('Use selection',self.use_selection),('Clear Selection',self.clear)):
-            button=W.QPushButton(label);button.clicked.connect(callback);layout.addWidget(button)
+            button=W.QPushButton(tr(label));button.clicked.connect(callback);layout.addWidget(button)
         self.fields.addRow(buttons)
         self.results=W.QTreeWidget();self.results.setColumnCount(2);self.results.setHeaderHidden(True)
         self.results.setRootIsDecorated(True);self.results.setIndentation(12)
@@ -48,11 +49,11 @@ class MeasurePanel(Panel):
         self.results.header().setSectionResizeMode(1,W.QHeaderView.Stretch)
         self.results.itemClicked.connect(self.copy_value)
         self.fields.addRow(self.results)
-        self.copy=W.QPushButton('Copy all results');self.copy.clicked.connect(self.copy_all);self.fields.addRow(self.copy)
-        self.ok.setText('OK' if obj else 'Save')
-        self.ok.setToolTip('Uložit asociativní měření do Analysis. Close pouze zavře dočasné měření.')
-        cancel=next(b for b in self.form.findChildren(W.QPushButton) if b.text()=='Cancel')
-        cancel.setText('Cancel' if obj else 'Close')
+        self.copy=W.QPushButton(tr("Copy all results"));self.copy.clicked.connect(self.copy_all);self.fields.addRow(self.copy)
+        self.ok.setText(tr("OK") if obj else tr("Save"))
+        self.ok.setToolTip(tr("Save an associative measurement under Analysis. Close only closes the temporary measurement."))
+        cancel=self.cancel_button
+        cancel.setText(tr("Cancel") if obj else tr("Close"))
         self.refresh_refs()
         if not obj:self.use_selection()
         Gui.Selection.addObserver(self)
@@ -78,7 +79,7 @@ class MeasurePanel(Panel):
             entry=self.candidate(obj,sub)
             if entry and entry not in refs:refs.append(entry)
         if not refs:return
-        if len(refs)>len(self.slots):self.selection_error='Vyber nejvýše %d prvky. Clear Selection zahájí nové měření.'%len(self.slots)
+        if len(refs)>len(self.slots):self.selection_error=tr("Select at most %d elements. Clear Selection starts a new measurement.")%len(self.slots)
         else:
             self.selection_error='';self.slots=refs+[None]*(len(self.slots)-len(refs))
             self.pick_index=min(len(refs),len(self.slots)-1)
@@ -100,13 +101,13 @@ class MeasurePanel(Panel):
         self.pick_index=row;Gui.Selection.clearSelection();self.update_hint()
 
     def update_hint(self):
-        self.hint.setText('Kliknutím v modelu %s Selection %d. Jiný prvek změníš výběrem jeho řádku.'%('nahradíš' if self.slots[self.pick_index] else 'doplníš',self.pick_index+1))
+        self.hint.setText(tr("Click in the model to %s Selection %d. Select another element row to change it.")%(tr("replace") if self.slots[self.pick_index] else tr("complete"),self.pick_index+1))
 
     def refresh_refs(self):
         blocker=C.QSignalBlocker(self.refs);self.refs.clear()
         for i,entry in enumerate(self.slots):
-            value=entry[0].Label+(' · '+entry[1][0] if entry[1][0] else '') if entry else 'Select…'
-            item=W.QListWidgetItem('Selection %d — %s'%(i+1,value));item.setToolTip(item.text());self.refs.addItem(item)
+            value=entry[0].Label+(' · '+entry[1][0] if entry[1][0] else '') if entry else tr('Select…')
+            item=W.QListWidgetItem(tr("Selection %d — %s")%(i+1,value));item.setToolTip(item.text());self.refs.addItem(item)
         self.refs.setCurrentRow(self.pick_index);del blocker;self.update_hint()
 
     def clear(self):
@@ -135,8 +136,8 @@ class MeasurePanel(Panel):
             for title,rows in self.data['groups']:
                 group=W.QTreeWidgetItem(self.results,[title]);group.setFirstColumnSpanned(True)
                 for label,value,unit in rows:
-                    text=measure_value(value,unit,self.settings());item=W.QTreeWidgetItem(group,[label,text])
-                    item.setData(1,C.Qt.UserRole,text);item.setToolTip(1,'Kliknutím zkopíruješ: '+text)
+                    text=measure_value(value,unit,self.settings());item=W.QTreeWidgetItem(group,[tr(label),text])
+                    item.setData(1,C.Qt.UserRole,text);item.setToolTip(1,tr("Click to copy: ")+text)
                     item.setTextAlignment(1,C.Qt.AlignRight|C.Qt.AlignVCenter)
                 group.setExpanded(title not in collapsed)
         elif self.selection_error:self.message.show()
@@ -152,7 +153,7 @@ class MeasurePanel(Panel):
         obj.Settings=json.dumps(settings);obj.References=self.references
         obj.ViewObject.Visibility=True
         self.doc.recompute();graphics.manager.dirty=True;graphics.manager.update()
-        if obj.Result.startswith('Analýza:'):raise ValueError(obj.Result)
+        if obj.Result.startswith(tr("Analysis:")):raise ValueError(obj.Result)
         return obj
 
     def copy_value(self,item,column):

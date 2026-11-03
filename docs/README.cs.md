@@ -11,6 +11,10 @@ Výpočty nadále provádí FreeCAD. Jeho programové soubory se neupravují.
 Starší FreeCAD, Qt 5 a jiné systémy nejsou ověřené. Nadstavba není kompletní kopií
 Fusionu a nepřidává podporu jeho souborového formátu F3D.
 
+## Jazyk rozhraní
+
+FusionFlow 0.21.0 podporuje češtinu i angličtinu. Ve FreeCADu vyber jazyk v **Úpravy → Nastavení → Obecné → Jazyk**, ulož práci a FreeCAD znovu spusť. Jazyk nadstavby se mění při novém spuštění, takže se nerozběhne změna popisků uprostřed otevřené operace. Názvy dokumentů a objektů, hodnoty parametrů a geometrie zůstávají zachované. Pro ostatní jazyky FreeCADu používá nadstavba angličtinu.
+
 ## Instalace
 
 1. Nainstaluj [FreeCAD 1.1.3](https://github.com/FreeCAD/FreeCAD/releases/tag/1.1.3).

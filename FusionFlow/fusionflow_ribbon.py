@@ -1,4 +1,5 @@
 """Fusion-style command ribbon, backed by real FreeCAD commands and menus."""
+from fusionflow_i18n import tr
 from pathlib import Path
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -270,7 +271,7 @@ class RibbonGroup(W.QWidget):
             button=W.QToolButton();button.setObjectName('Ribbon_'+spec[1])
             action=ribbon.action(spec,button);button.setDefaultAction(action)
             button.setToolButtonStyle(C.Qt.ToolButtonIconOnly)
-            button.setToolTip(spec[0]+(' ('+spec[3]+')' if spec[3] else ''))
+            button.setToolTip(tr(spec[0])+(' ('+spec[3]+')' if spec[3] else ''))
             button.setFixedSize(48,50)
             button.setIconSize(C.QSize(40,40))
             row.addWidget(button);ribbon.widgets.append(action)
@@ -287,18 +288,18 @@ class RibbonGroup(W.QWidget):
         available=commands(entries)
         missing=[s for s in visible if s[1] and s[1] not in available]
         complete=missing+([None] if missing and entries else [])+entries
-        self.menu=ribbon.menu(complete,self);self.menu.setTitle(title)
+        self.menu=ribbon.menu(complete,self);self.menu.setTitle(tr(title))
         if visible:self.menu.setIcon(icons.command_icon(visible[0][1],visible[0][2]))
         self.compact=W.QToolButton();self.compact.setObjectName('Compact_'+title.replace(' ','_'))
         self.compact.setIcon(self.menu.icon());self.compact.setIconSize(C.QSize(40,40))
         self.compact.setFixedHeight(50)
         self.compact.setSizePolicy(W.QSizePolicy.Expanding,W.QSizePolicy.Fixed)
         self.compact.setMenu(self.menu);self.compact.setPopupMode(W.QToolButton.InstantPopup)
-        self.compact.setToolTip(title+' — všechny nástroje skupiny');self.compact.setAccessibleName(title)
+        self.compact.setToolTip(tr(title)+tr(" — all tools in this group"));self.compact.setAccessibleName(tr(title))
         self.compact.setCheckable(True)
         column.addWidget(self.compact);self.compact.hide()
         self.footer=W.QToolButton();self.footer.setProperty('groupFooter',True)
-        self.footer.setText(title+' ⌄' if entries else title);self.footer.setFixedHeight(21)
+        self.footer.setText(tr(title)+' ⌄' if entries else tr(title));self.footer.setFixedHeight(21)
         self.footer.setSizePolicy(W.QSizePolicy.Expanding,W.QSizePolicy.Fixed)
         if entries:
             self.footer.setMenu(self.menu);self.footer.setPopupMode(W.QToolButton.InstantPopup)
@@ -365,8 +366,8 @@ class Ribbon(W.QToolBar):
         q.setContentsMargins(8,0,10,0)
         q.setSpacing(5)
         file_button = W.QToolButton()
-        file_button.setText('☰  FILE')
-        file_button.setToolTip('Původní nabídky FreeCADu')
+        file_button.setText(tr("☰  FILE"))
+        file_button.setToolTip(tr("Original FreeCAD menus"))
         full_menu = W.QMenu(file_button)
         full_menu.setStyleSheet(MENU_STYLE)
         for action in self.native_menus:
@@ -381,7 +382,7 @@ class Ribbon(W.QToolBar):
                 button.setDefaultAction(native)
                 button.setIcon(icons.command_icon(name,small=True))
             else:
-                button.setText(name[4:])
+                button.setText(tr(name[4:]))
                 button.clicked.connect(lambda checked=False, cmd=name: Gui.runCommand(cmd))
             button.setIconSize(C.QSize(17,17))
             button.setFixedSize(27,25)
@@ -390,7 +391,7 @@ class Ribbon(W.QToolBar):
         q.addWidget(self.document_tabs,1)
         search = W.QToolButton()
         search.setIcon(icon('search'))
-        search.setText('Search  S')
+        search.setText(tr("Search  S"))
         search.setToolButtonStyle(C.Qt.ToolButtonTextBesideIcon)
         search.clicked.connect(lambda: Gui.runCommand('FusionFlow_Search'))
         q.addWidget(search)
@@ -400,16 +401,16 @@ class Ribbon(W.QToolBar):
         body.setSpacing(6)
         design = W.QToolButton()
         design.setObjectName('DesignButton')
-        design.setText('DESIGN ⌄')
+        design.setText(tr("DESIGN ⌄"))
         design.setFixedSize(122,82)
         design_menu = W.QMenu(design)
         design_menu.setStyleSheet(MENU_STYLE)
         for label,wb in [('Design','PartDesignWorkbench'),('Surface','SurfaceWorkbench'),('Mesh','MeshWorkbench'),
                          ('Assembly','AssemblyWorkbench'),('Drawing','TechDrawWorkbench'),('Manufacture','CAMWorkbench')]:
-            a = design_menu.addAction(label)
+            a = design_menu.addAction(tr(label))
             a.setEnabled(wb in Gui.listWorkbenches())
             a.triggered.connect(lambda checked=False, workbench=wb: self.switch_workbench(workbench))
-        extra=design_menu.addMenu('All FreeCAD workbenches')
+        extra=design_menu.addMenu(tr("All FreeCAD workbenches"))
         extra.setStyleSheet(MENU_STYLE)
         for wb,instance in Gui.listWorkbenches().items():
             a=extra.addAction(getattr(instance,'MenuText',wb))
@@ -427,10 +428,10 @@ class Ribbon(W.QToolBar):
         self.tabs.setFixedHeight(28)
         self.tab_names=['SOLID','SURFACE','MESH','SHEET METAL','PLASTIC','MANAGE','UTILITIES','SKETCH']
         for name in self.tab_names:
-            self.tabs.addTab(name)
+            self.tabs.addTab(tr(name))
         for idx in (3,4):
             self.tabs.setTabEnabled(idx,False)
-            self.tabs.setTabToolTip(idx,'Tato sada nástrojů Fusionu není v této instalaci dostupná.')
+            self.tabs.setTabToolTip(idx,tr("This Fusion toolset is unavailable in this installation."))
         self.tabs.currentChanged.connect(self.tab_changed)
         right.addWidget(self.tabs)
         self.scroll=W.QScrollArea()
@@ -479,7 +480,7 @@ class Ribbon(W.QToolBar):
 
     def switch_workbench(self, wb):
         if Gui.activeDocument() and Gui.activeDocument().getInEdit():
-            W.QMessageBox.information(self.main,'Finish Sketch','Nejprve dokončete otevřenou editaci tlačítkem Finish Sketch / Close.')
+            W.QMessageBox.information(self.main,tr("Finish Sketch"),tr("Finish the current edit with Finish Sketch / Close first."))
             return
         Gui.activateWorkbench(wb)
 
@@ -491,7 +492,7 @@ class Ribbon(W.QToolBar):
         for dock in self.main.findChildren(W.QDockWidget):
             if dock.objectName() in ('Model','Tree view','Property view','Tasks'):
                 self.dock_titles[dock]=dock.windowTitle()
-                dock.setWindowTitle({'Model':'BROWSER','Tree view':'BROWSER','Property view':'PROPERTIES','Tasks':'TASKS'}[dock.objectName()])
+                dock.setWindowTitle(tr({'Model':'BROWSER','Tree view':'BROWSER','Property view':'PROPERTIES','Tasks':'TASKS'}[dock.objectName()]))
         if not timeline:
             return
         self.history_features=timeline.features()
@@ -518,16 +519,16 @@ class Ribbon(W.QToolBar):
         controls.setSpacing(1)
         self.history_buttons=[]
         for direction,tip,picture in [
-            ('first','První krok — náhled',W.QStyle.SP_MediaSkipBackward),
-            ('previous','Předchozí krok — náhled',W.QStyle.SP_MediaSeekBackward),
-            ('next','Následující krok — náhled',W.QStyle.SP_MediaSeekForward),
-            ('end','Konec historie — obnovit výsledný model',W.QStyle.SP_MediaSkipForward)]:
+            ('first',tr("First step — preview"),W.QStyle.SP_MediaSkipBackward),
+            ('previous',tr("Previous step — preview"),W.QStyle.SP_MediaSeekBackward),
+            ('next',tr("Next step — preview"),W.QStyle.SP_MediaSeekForward),
+            ('end',tr("End of history — restore the final model"),W.QStyle.SP_MediaSkipForward)]:
             button=W.QToolButton()
             button.setObjectName('History_'+direction)
             button.setIcon(icon('history_'+direction,True))
             button.setIconSize(C.QSize(16,16))
             button.setFixedSize(23,28)
-            button.setToolTip(tip)
+            button.setToolTip(tr(tip))
             button.setStyleSheet('QToolButton {border:0;background:transparent;} QToolButton:hover {background:#526d86;}')
             button.clicked.connect(lambda checked=False,d=direction:self.navigate_history(d))
             controls.addWidget(button)
@@ -583,11 +584,11 @@ class Ribbon(W.QToolBar):
 
     def action(self, spec, parent, small=False):
         label,cmd,picture,key=spec
-        a=G.QAction(icons.command_icon(cmd,picture,small), label+('\t'+key if key else ''),parent)
+        a=G.QAction(icons.command_icon(cmd,picture,small), tr(label)+('\t'+key if key else ''),parent)
         a.setProperty('FusionIcon',icons.COMMANDS.get(cmd,picture))
         a.setProperty('FusionSmallIcon',small)
         a.setData(cmd)
-        a.setToolTip(label if cmd else label+' — není implementováno ve FusionFlow.')
+        a.setToolTip(tr(label) if cmd else tr(label)+tr(" — not implemented in FusionFlow."))
         a.triggered.connect(lambda checked=False,s=spec:self.run(s))
         self.sync_action(a)
         return a
@@ -600,7 +601,7 @@ class Ribbon(W.QToolBar):
             a.setEnabled(True)
         elif cmd not in Gui.listCommands():
             a.setEnabled(False)
-            a.setToolTip('Příkaz není dostupný v této instalaci FreeCADu: '+cmd)
+            a.setToolTip(tr("Command unavailable in this FreeCAD installation: ")+cmd)
         else:
             source=native_action(cmd)
             a.setEnabled(source.isEnabled() if source else bool(App.ActiveDocument) or cmd.startswith('Std_'))
@@ -626,7 +627,7 @@ class Ribbon(W.QToolBar):
                 menu.addSeparator()
             elif len(entry)==2 and isinstance(entry[1],list):
                 sub=self.menu(entry[1],menu)
-                sub.setTitle(entry[0])
+                sub.setTitle(tr(entry[0]))
                 menu.addMenu(sub)
             else:
                 menu.addAction(self.action(entry,menu,True))
@@ -728,11 +729,11 @@ class Ribbon(W.QToolBar):
             self.group('INSPECT',INSPECT_QUICK,INSPECT,layout)
             self.group('ASSEMBLE',[ASSEMBLE[0]],ASSEMBLE,layout)
         self.more=W.QToolButton();self.more.setObjectName('RibbonMore')
-        self.more.setText('MORE ⌄');self.more.setFixedHeight(71)
+        self.more.setText(tr("MORE ⌄"));self.more.setFixedHeight(71)
         self.more.setIcon(icon('more'));self.more.setIconSize(C.QSize(40,40))
         self.more.setToolButtonStyle(C.Qt.ToolButtonTextUnderIcon)
-        self.more.setToolTip('Další skupiny nástrojů — při rozšíření okna se vrátí do pásu')
-        self.more.setAccessibleName('Další skupiny nástrojů')
+        self.more.setToolTip(tr("More tool groups — they return to the ribbon when the window is wider"))
+        self.more.setAccessibleName(tr("More tool groups"))
         self.more_menu=W.QMenu(self.more);self.more_menu.setStyleSheet(MENU_STYLE)
         for group in self.groups:self.more_menu.addMenu(group.menu)
         self.more.setMenu(self.more_menu);self.more.setPopupMode(W.QToolButton.InstantPopup)

@@ -1,4 +1,5 @@
 """OCC inspection calculations and explicitly sampled surface visualizations."""
+from fusionflow_i18n import tr
 import math
 import FreeCAD as A
 import Part
@@ -16,7 +17,7 @@ def references_shapes(references):
         shape=global_shape(obj)
         selected=[shape.getElement(s) for s in subs if s]
         result.append((obj,selected[0] if len(selected)==1 else Part.makeCompound(selected) if selected else shape))
-    if not result:raise ValueError('Vyber těleso nebo geometrii k analýze.')
+    if not result:raise ValueError(tr("Select a body or geometry to analyse."))
     return result
 
 
@@ -54,7 +55,7 @@ def sampled_face(face,spacing):
             stack.extend(((a,ab,ca),(ab,b,bc),(ca,bc,c),(ab,bc,ca)))
         else:
             count+=1
-            if count>20000:raise ValueError('Příliš hustá analýza. Sniž Quality nebo počet vybraných těles.')
+            if count>20000:raise ValueError(tr("The analysis is too dense. Reduce Quality or select fewer bodies."))
             # Project subdivided chord vertices back onto the exact surface.
             points=[];normals=[];curvatures=[]
             for p in (a,b,c):
@@ -93,13 +94,13 @@ def measure_value(value, unit, settings):
 
 
 def measure(shapes,settings):
-    if len(shapes)>12:raise ValueError('Pro přehledné měření vyber nejvýše 12 referencí.')
+    if len(shapes)>12:raise ValueError(tr("Measurements are limited to 12 references to keep results readable."))
     result=dict(meshes=[],lines=[],markers=[],solids=[],mask=[],groups=[],text='')
     selections=[];centres=[]
     numbers=settings.get('selection_numbers',list(range(1,len(shapes)+1)))
     if len(numbers)!=len(shapes):numbers=list(range(1,len(shapes)+1))
     def coordinates(rows,p,prefix):
-        rows.extend((prefix+' '+axis,value,'mm') for axis,value in zip('XYZ',p))
+        rows.extend((tr(prefix)+' '+axis,value,'mm') for axis,value in zip('XYZ',p))
     for index,(obj,shape) in enumerate(shapes):
         rows=[];centre=None;radius=None
         if shape.Solids:rows.append(('Volume',shape.Volume,'mm³'))
@@ -114,7 +115,7 @@ def measure(shapes,settings):
         if radius is not None:rows.extend((('Radius',radius,'mm'),('Diameter',radius*2,'mm')))
         if centre is not None:coordinates(rows,centre,'Center')
         centres.append(centre)
-        selections.append(('Selection %d · %s · %s'%(numbers[index],obj.Label,shape.ShapeType),rows))
+        selections.append((tr('Selection %d · %s · %s')%(numbers[index],obj.Label,tr(shape.ShapeType)),rows))
     for i,(first,a) in enumerate(shapes):
         for j,(second,b) in enumerate(shapes[i+1:],i+1):
             distance,pairs,_=a.distToShape(b);p,q=pairs[0];delta=q-p
@@ -138,11 +139,11 @@ def measure(shapes,settings):
             if u is not None and v is not None:
                 angle=math.degrees(u.getAngle(v));angle=min(angle,180-angle)
                 rows.append(('Smaller angle',90-angle if ut!=vt else angle,'°'))
-            title='Results' if len(shapes)==2 else 'Results %d ↔ %d'%(i+1,j+1)
-            if frame!='None':title+=' · '+frame
+            title=tr('Results') if len(shapes)==2 else tr('Results %d ↔ %d')%(i+1,j+1)
+            if frame!='None':title+=' · '+tr(frame)
             result['groups'].append((title,rows))
     result['groups'].extend(selections)
-    result['text']='\n\n'.join(title+'\n'+'\n'.join(label+': '+measure_value(value,unit,settings) for label,value,unit in rows) for title,rows in result['groups'])
+    result['text']='\n\n'.join(title+'\n'+'\n'.join(tr(label)+': '+measure_value(value,unit,settings) for label,value,unit in rows) for title,rows in result['groups'])
     return result
 
 
@@ -158,7 +159,7 @@ def calculate(kind,references,settings):
     result=dict(meshes=[],lines=[],markers=[],solids=[],mask=[],text='')
     if kind=='Interference':
         if len(shapes)<2 or any(not shape.Solids for _,shape in shapes):
-            raise ValueError('Vyber alespoň dvě objemová tělesa.')
+            raise ValueError(tr("Select at least two solid bodies."))
         reports=[]
         for i,(first,a) in enumerate(shapes):
             for second,b in shapes[i+1:]:
@@ -167,21 +168,21 @@ def calculate(kind,references,settings):
                 if common.Volume>max(1e-7,min(a.Volume,b.Volume)*1e-10):
                     reports.append((common.Volume,first.Label,second.Label));result['solids'].append(common)
         reports.sort(reverse=True)
-        result['text']='Průniky: %d\n'%len(reports)+'\n'.join('%s × %s: %.6g mm³'%(a,b,v) for v,a,b in reports)
-        if not reports:result['text']+='Žádný objemový průnik. Pouhý dotyk není kolize.'
+        result['text']=tr("Intersections: %d\n")%len(reports)+'\n'.join('%s × %s: %.6g mm³'%(a,b,v) for v,a,b in reports)
+        if not reports:result['text']+=tr("No volumetric overlap. Contact alone is not interference.")
         return result
     if kind=='CenterOfMass':
-        if any(not s.Solids for _,s in shapes):raise ValueError('Pro těžiště vyber objemová tělesa.')
+        if any(not s.Solids for _,s in shapes):raise ValueError(tr("Centre-of-mass analysis requires solid bodies."))
         volume=sum(s.Volume for _,s in shapes)
-        if volume<=0:raise ValueError('Vybraná tělesa nemají kladný objem.')
+        if volume<=0:raise ValueError(tr("The selected bodies have no positive volume."))
         center=sum((s.CenterOfMass*s.Volume for _,s in shapes),A.Vector())/volume
         result['markers']=[center]
         radius=diagonal/35
         for axis in (A.Vector(1,0,0),A.Vector(0,1,0),A.Vector(0,0,1)):
             result['lines'].extend((center-axis*radius,center+axis*radius))
-        result['text']='Rovnoměrná stejná hustota všech těles.\nX %.6g · Y %.6g · Z %.6g mm\nObjem %.6g mm³'%(*center,volume)
+        result['text']=tr("Uniform equal density for all bodies.\nX %.6g · Y %.6g · Z %.6g mm\nVolume %.6g mm³")%(*center,volume)
         if settings['density']>0:result['text']+='\nHmotnost %.6g kg'%(volume*settings['density']/1e9)
-        result['text']+='\nPřekrývající se tělesa se počítají samostatně.'
+        result['text']+=tr("\nOverlapping bodies are counted separately.")
         return result
     if kind in ('CurvatureComb','Isocurve'):
         count=max(2,min(60,int(settings['count'])))
@@ -197,13 +198,13 @@ def calculate(kind,references,settings):
                             curve=face.Surface.uIso(u0+(u1-u0)*t) if direction=='U' else face.Surface.vIso(v0+(v1-v0)*t)
                             edge=curve.toShape(v0,v1) if direction=='U' else curve.toShape(u0,u1)
                             for trimmed in edge.common(face).Edges:result['lines'].extend(edge_lines(trimmed))
-        result['text']=('Hřeben křivosti: %d vzorků na hranu · Scale %.6g mm²'%(count+1,settings['scale'])) if kind=='CurvatureComb' else 'Izokřivky %s · %d v každém směru, oříznuté na hranicích ploch.'%(settings['iso'],count)
-        if not result['lines']:raise ValueError('Výběr neobsahuje analyzovatelnou hranu nebo plochu. Bodové degenerované hrany se vynechávají.')
+        result['text']=(tr("Curvature comb: %d samples per edge · Scale %.6g mm²")%(count+1,settings['scale'])) if kind=='CurvatureComb' else tr("%s isocurves · %d in each direction, trimmed at face boundaries.")%(settings['iso'],count)
+        if not result['lines']:raise ValueError(tr("The selection contains no analysable edge or face. Degenerate point edges are skipped."))
         return result
     if kind not in ('CurvatureMap','Draft','Accessibility','MinimumRadius','Zebra','Environment','ComponentColors'):
-        raise ValueError('Tato analýza zatím nemá výpočet.')
+        raise ValueError(tr("This analysis has no calculation yet."))
     direction=A.Vector(*settings['direction'])
-    if direction.Length<1e-9:raise ValueError('Směr musí být nenulový vektor.')
+    if direction.Length<1e-9:raise ValueError(tr("Direction must be a nonzero vector."))
     direction.normalize();minimum=float('inf');values=[];tested=0;unknown=0;access_cache={}
     obstruction=Part.makeCompound([s for _,s in shapes]) if kind=='Accessibility' else None
     spacing=diagonal/max(4,min(32,settings['quality']))
@@ -214,7 +215,7 @@ def calculate(kind,references,settings):
                 start=len(points);triangles.append((start,start+1,start+2));points.extend(ps);normals.extend(ns)
                 for p,n,k in zip(ps,ns,ks):
                     tested+=1
-                    if tested>90000:raise ValueError('Příliš mnoho vzorků. Zvol nižší Quality nebo méně těles.')
+                    if tested>90000:raise ValueError(tr("Too many samples. Reduce Quality or select fewer bodies."))
                     if kind in ('CurvatureMap','MinimumRadius') and not all(math.isfinite(value) for value in k):
                         color=(.6,.6,.6);unknown+=1
                     elif kind=='CurvatureMap':
@@ -242,17 +243,17 @@ def calculate(kind,references,settings):
                     colors.append(color)
         result['meshes'].append(dict(points=points,normals=normals,colors=colors,triangles=triangles))
         result['mask'].append(obj)
-    result['text']='Vzorkovaná analýza · %d vrcholových vzorků.\nQuality mění hustotu, nikoli geometrii modelu.'%tested
-    if unknown:result['text']+='\nNedefinovaná křivost v %d vzorcích (šedě).'%unknown
+    result['text']=tr("Sampled analysis · %d vertex samples.\nQuality changes sampling density, not model geometry.")%tested
+    if unknown:result['text']+=tr("\nUndefined curvature at %d samples (grey).")%unknown
     if values:
         unit='°' if kind=='Draft' else 'mm⁻²' if settings['curvature']=='Gaussian' else 'mm⁻¹'
-        result['text']+='\nRozsah %.6g až %.6g %s'%(min(values),max(values),unit)
+        result['text']+=tr("\nRange %.6g to %.6g %s")%(min(values),max(values),unit)
     if kind=='MinimumRadius':
-        result['text']+='\n'+('Nejmenší vzorkovaný konkávní poloměr %.6g mm.'%minimum if math.isfinite(minimum) else 'Ve vzorcích nejsou konkávní plochy.')
-        result['text']+='\nČervená: menší než limit. Šedá: rovné/konvexní.'
-    if kind=='Accessibility':result['text']+='\nZelená: přímý výhled po směru. Neověřuje vůli skutečného nástroje ani jiné nevybrané objekty.'
-    if kind=='Draft':result['text']+='\nModrá: záporný úkos · zelená: nulový · červená: kladný.'
-    if kind=='Environment':result['text']+='\nProcedurální reflexní prostředí; bez HDR fotografie.'
+        result['text']+='\n'+(tr("Smallest sampled concave radius: %.6g mm.")%minimum if math.isfinite(minimum) else tr("No concave faces in the samples."))
+        result['text']+=tr("\nRed: below the limit. Grey: flat/convex.")
+    if kind=='Accessibility':result['text']+=tr("\nGreen: unobstructed view along the direction. Does not check actual tool clearance or other unselected objects.")
+    if kind=='Draft':result['text']+=tr("\nBlue: negative draft · green: zero · red: positive.")
+    if kind=='Environment':result['text']+=tr("\nProcedural reflection environment; no HDR photograph.")
     return result
 
 
@@ -272,6 +273,6 @@ def mesh_groups(references,settings):
             normals.extend([facet.Normal]*3);paint.extend([colors.get(index,(.6,.6,.6))]*3)
         result['meshes'].append(dict(points=points,normals=normals,colors=paint,triangles=triangles))
         result['mask'].append(obj);total+=len(groups)
-    if not result['meshes']:raise ValueError('Vyber síťový objekt (Mesh), například importované STL.')
-    result['text']='%d skupin koplanárních trojúhelníků · tolerance %.6g mm.\nNativní segmentace FreeCAD Mesh; geometrie ani uložené barvy se nemění.'%(total,settings['limit'])
+    if not result['meshes']:raise ValueError(tr("Select a Mesh object, such as an imported STL."))
+    result['text']=tr("%d groups of coplanar triangles · tolerance %.6g mm.\nNative FreeCAD Mesh segmentation; geometry and saved colours are unchanged.")%(total,settings['limit'])
     return result

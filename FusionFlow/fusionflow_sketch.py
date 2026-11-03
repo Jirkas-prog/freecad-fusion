@@ -1,4 +1,5 @@
 """Compact sketch controls using the native Sketcher, solver and edit session."""
+from fusionflow_i18n import tr
 import re
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -56,11 +57,11 @@ class FeatureOptions(W.QWidget):
         self.hints.setTextFormat(C.Qt.RichText);self.hints.setStyleSheet('color:#c6d5e1;font-size:11px;padding:3px 0;')
         body_layout.addWidget(self.hints)
         self.actions=W.QWidget();buttons=W.QHBoxLayout(self.actions);buttons.setContentsMargins(0,0,0,0)
-        self.cycle=W.QPushButton('Další režim · M');self.cycle.setObjectName('FusionToolCycle')
-        self.cycle.setToolTip('Nativní přepnutí režimu. U Polyline je dostupné po první úsečce.')
+        self.cycle=W.QPushButton(tr("Next mode · M"));self.cycle.setObjectName('FusionToolCycle')
+        self.cycle.setToolTip(tr("Native mode switch. Polyline offers it after the first segment."))
         self.cycle.clicked.connect(lambda:self.send_key(C.Qt.Key_M,'m',0x4d));buttons.addWidget(self.cycle)
-        self.cancel=W.QPushButton('Přerušit · Esc');self.cancel.setObjectName('FusionToolEscape')
-        self.cancel.setToolTip('Stejné jako Escape v kreslicí ploše; dokončená geometrie zůstane zachovaná.')
+        self.cancel=W.QPushButton(tr("Stop · Esc"));self.cancel.setObjectName('FusionToolEscape')
+        self.cancel.setToolTip(tr("Same as Escape in the drawing area; completed geometry is preserved."))
         self.cancel.clicked.connect(lambda:self.send_key(C.Qt.Key_Escape,'',0x1b));buttons.addWidget(self.cancel)
         body_layout.addWidget(self.actions)
         self.hide()
@@ -92,18 +93,18 @@ class FeatureOptions(W.QWidget):
             self.family=family
             if family in ('Slot','ArcSlot'):
                 row=W.QWidget();buttons=W.QHBoxLayout(row);buttons.setContentsMargins(0,0,0,0)
-                buttons.addWidget(W.QLabel('Slot'),1)
-                for command,picture,label in [('Sketcher_CreateSlot','slot','Rovná drážka'),('Sketcher_CreateArcSlot','arc_slot','Oblouková drážka')]:
+                buttons.addWidget(W.QLabel(tr("Slot")),1)
+                for command,picture,label in [('Sketcher_CreateSlot','slot',tr("Straight slot")),('Sketcher_CreateArcSlot','arc_slot',tr("Arc slot"))]:
                     button=W.QToolButton();button.setObjectName('Variant_'+command);button.setIcon(icons.icon(picture,True))
                     button.setIconSize(C.QSize(21,21));button.setFixedSize(28,26);button.setCheckable(True)
-                    button.setChecked((family=='Slot')==(command=='Sketcher_CreateSlot'));button.setToolTip(label+' — začne nový tvar')
+                    button.setChecked((family=='Slot')==(command=='Sketcher_CreateSlot'));button.setToolTip(label+tr(" — starts a new shape"))
                     button.clicked.connect(lambda checked=False,cmd=command:self.start_tool(cmd));buttons.addWidget(button)
                 self.rows.addWidget(row)
             for combo_index,combo in enumerate(combos):
                 container=W.QWidget();row=W.QHBoxLayout(container);row.setContentsMargins(0,0,0,0);row.setSpacing(3)
                 label=source.findChild(W.QLabel,combo.objectName().replace('comboBox','comboLabel'))
-                caption=('Ends' if family=='ArcSlot' else family) if family and combo_index==0 else label.text().replace(' (M)','') if label else 'Mode'
-                row.addWidget(W.QLabel(caption),1)
+                caption=('Ends' if family=='ArcSlot' else TOOL_FAMILIES.get(family,family)) if family and combo_index==0 else label.text().replace(' (M)','') if label else 'Mode'
+                row.addWidget(W.QLabel(tr(caption)),1)
                 buttons=[]
                 for i in range(combo.count()):
                     button=W.QToolButton();button.setCheckable(True);button.setFixedSize(25,25);button.setIconSize(C.QSize(19,19))
@@ -128,12 +129,12 @@ class FeatureOptions(W.QWidget):
                 names=['One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten']
                 index=next((i for i,n in enumerate(names) if native.objectName()=='parameter'+n),0)
                 label=source.findChild(W.QLabel,'label'+(str(index+1) if index else ''))
-                layout.addWidget(W.QLabel(label.text() if label else 'Value'))
+                layout.addWidget(W.QLabel(label.text() if label else tr('Value')))
                 field=W.QLineEdit();field.setMaximumWidth(105)
                 field.editingFinished.connect(lambda n=native,f=field:self.set_value(n,f))
                 layout.addWidget(field);self.rows.addWidget(row);self.controls.append((native,field))
             if source and family not in ('ArcSlot',):
-                hint=W.QLabel('Tab: hodnoty   ·   Esc: ukončit')
+                hint=W.QLabel(tr("Tab: values   ·   Esc: finish"))
                 hint.setStyleSheet('color:#aebbc9;font-size:10px;padding:2px 0;')
                 self.rows.addWidget(hint)
         for native,control in self.controls:
@@ -182,13 +183,13 @@ class FeatureOptions(W.QWidget):
             quantity=App.Units.Quantity(field.text())
             current=native.property('value')
             if isinstance(native,(W.QSpinBox,W.QDoubleSpinBox)):
-                if quantity.Unit!=App.Units.Unit():raise ValueError('Zadejte počet bez jednotky.')
-                if isinstance(native,W.QSpinBox) and not quantity.Value.is_integer():raise ValueError('Zadejte celé číslo.')
+                if quantity.Unit!=App.Units.Unit():raise ValueError(tr("Enter a count without units."))
+                if isinstance(native,W.QSpinBox) and not quantity.Value.is_integer():raise ValueError(tr("Enter a whole number."))
                 native.setValue(int(quantity.Value) if isinstance(native,W.QSpinBox) else quantity.Value)
             else:
                 if hasattr(current,'Unit') and quantity.Unit not in (App.Units.Unit(),current.Unit):
-                    raise ValueError('Nesprávná jednotka pro tento parametr.')
-                if not native.setProperty('rawValue',quantity.Value):raise ValueError('Pole není editovatelné.')
+                    raise ValueError(tr("Incorrect unit for this parameter."))
+                if not native.setProperty('rawValue',quantity.Value):raise ValueError(tr("The field is not editable."))
             native.editingFinished.emit()
             field.setStyleSheet('')
         except Exception as exc:
@@ -225,7 +226,7 @@ class SketchPalette(OperationCard):
         outer = W.QVBoxLayout(self)
         outer.setContentsMargins(10, 5, 8, 7)
         outer.setSpacing(3)
-        title = W.QLabel('SKETCH PALETTE')
+        title = W.QLabel(tr("SKETCH PALETTE"))
         title.setStyleSheet('font-size:11px;letter-spacing:1px;')
         outer.addWidget(title)
         self.scroll = W.QScrollArea()
@@ -246,30 +247,30 @@ class SketchPalette(OperationCard):
         self.rows.setVerticalSpacing(2)
         self.scroll.setWidget(content)
         outer.addWidget(self.scroll)
-        self.row('Linetype', self.command_button('Sketcher_ToggleConstruction', 'construction',
-                 'Construction · X — přepnout vybrané čáry nebo režim nového kreslení'))
-        self.row('Look At', self.command_button('Sketcher_ViewSketch', 'view_look_at',
-                 'Pohled kolmo na rovinu aktivní skici'))
-        self.check('grid', 'Sketch Grid', lambda on: self.set_view('ShowGrid', on), 'Mřížka aktivní skici')
+        self.row(tr("Linetype"), self.command_button('Sketcher_ToggleConstruction', 'construction',
+                 tr("Construction · X — toggle selected lines or the mode for new geometry")))
+        self.row(tr("Look At"), self.command_button('Sketcher_ViewSketch', 'view_look_at',
+                 tr("View normal to the active sketch plane")))
+        self.check('grid', 'Sketch Grid', lambda on: self.set_view('ShowGrid', on), tr("Active sketch grid"))
         self.check('snap', 'Snap', self.set_snap,
-                   'Přichycení k mřížce; geometrické vazby se nastavují samostatně')
-        self.check('slice', 'Slice', self.slice, 'Dočasný řez v rovině skici: vyplněný materiál a obrysy; otvory zůstávají prázdné')
+                   tr("Snap to grid; geometric constraints are configured separately"))
+        self.check('slice', 'Slice', self.slice, tr("Temporary section in the sketch plane: filled material and outlines; holes remain empty"))
         self.check('profiles', 'Profile', lambda on: App.ParamGet(PREF).SetBool('SketchProfiles',on),
-                   'Modré vybarvení uzavřených oblastí skici — stejné oblasti jako pro Extrude')
-        self.check('points','Points',lambda on: App.ParamGet(PREF).SetBool('SketchPoints',on),'Zobrazit body skici')
+                   tr("Blue shading of closed sketch regions — the same regions used for Extrude"))
+        self.check('points','Points',lambda on: App.ParamGet(PREF).SetBool('SketchPoints',on),tr("Show sketch points"))
         self.check('dimensions', 'Dimensions', lambda on: set_constraint_visibility(self.sketch, True, on),
-                   'Zobrazit / skrýt kóty; hodnoty kót i jejich vazby zůstávají zachované')
+                   tr("Show / hide dimensions; their values and constraints are preserved"))
         self.check('constraints', 'Constraints', lambda on: set_constraint_visibility(self.sketch, False, on),
-                   'Zobrazit / skrýt symboly geometrických vazeb')
-        self.check('projected','Projected Geometries',lambda on: App.ParamGet(PREF).SetBool('SketchProjected',on),'Zobrazit promítnuté referenční a profilové čáry')
-        self.check('construction_geometry','Construction Geometries',lambda on: App.ParamGet(PREF).SetBool('SketchConstruction',on),'Zobrazit konstrukční čáry; jejich vazby se nemění')
+                   tr("Show / hide geometric constraint symbols"))
+        self.check('projected','Projected Geometries',lambda on: App.ParamGet(PREF).SetBool('SketchProjected',on),tr("Show projected reference and profile lines"))
+        self.check('construction_geometry','Construction Geometries',lambda on: App.ParamGet(PREF).SetBool('SketchConstruction',on),tr("Show construction lines; their constraints are unchanged"))
         advanced = W.QWidget()
         advanced_header = self.section('Sketcher options',advanced,False)
         content_layout.addWidget(advanced_header);content_layout.addWidget(advanced)
         option_rows = self.rows
         self.rows = W.QGridLayout(advanced);self.rows.setContentsMargins(0,2,2,2);self.rows.setVerticalSpacing(2)
-        self.check('adaptive', 'Adaptive Grid', lambda on: self.set_view('GridAuto', on), 'Automatická rozteč podle přiblížení')
-        self.check('auto', 'Auto Constraints', lambda on: self.set_view('Autoconstraints', on), 'Automatické vazby při kreslení')
+        self.check('adaptive', 'Adaptive Grid', lambda on: self.set_view('GridAuto', on), tr("Automatic spacing based on zoom"))
+        self.check('auto', 'Auto Constraints', lambda on: self.set_view('Autoconstraints', on), tr("Automatic constraints while drawing"))
         self.status = W.QLabel()
         self.status.setWordWrap(True)
         self.status.setTextFormat(C.Qt.PlainText)
@@ -278,21 +279,21 @@ class SketchPalette(OperationCard):
         self.profile_status.setWordWrap(True)
         self.profile_status.setTextFormat(C.Qt.PlainText)
         self.rows.addWidget(self.profile_status,self.rows.rowCount(),0,1,2)
-        find = W.QPushButton('Find Under-Constrained')
-        find.setToolTip('Vybrat geometrii, která se stále může pohybovat')
+        find = W.QPushButton(tr("Find Under-Constrained"))
+        find.setToolTip(tr("Select geometry that can still move"))
         find.clicked.connect(lambda: Gui.runCommand('Sketcher_SelectElementsWithDoFs'))
         self.widgets['find'] = find
         self.rows.addWidget(find, self.rows.rowCount(), 0, 1, 2)
-        self.details = W.QCheckBox('Sketcher details')
-        self.details.setToolTip('Nativní volby nástroje, seznam kót, vazeb a diagnostika řešiče')
+        self.details = W.QCheckBox(tr("Sketcher details"))
+        self.details.setToolTip(tr("Native tool options, dimension list, constraints and solver diagnostics"))
         self.details.toggled.connect(self.show_details)
         self.rows.addWidget(self.details,self.rows.rowCount(),0,1,2)
         self.rows = option_rows
-        self.problem=W.QPushButton('Vazby vyžadují opravu — otevřít diagnostiku')
+        self.problem=W.QPushButton(tr("Constraints need repair — open diagnostics"))
         self.problem.setStyleSheet('color:#ffb06a;font-size:10px;')
         self.problem.clicked.connect(lambda:self.details.setChecked(True))
         outer.addWidget(self.problem);self.problem.hide()
-        finish = W.QPushButton('Finish Sketch')
+        finish = W.QPushButton(tr("Finish Sketch"))
         finish.setObjectName('FusionSketchFinish')
         finish.clicked.connect(lambda: Gui.runCommand('Sketcher_LeaveSketch'))
         outer.addWidget(finish, 0, C.Qt.AlignRight)
@@ -302,7 +303,7 @@ class SketchPalette(OperationCard):
     def section(self, text, content, expanded=True):
         button=W.QToolButton();button.setProperty('section',True)
         button.setToolButtonStyle(C.Qt.ToolButtonTextBesideIcon)
-        button.setText(text);button.setCheckable(True);button.setChecked(expanded)
+        button.setText(tr(text));button.setCheckable(True);button.setChecked(expanded)
         def toggle(on):
             content.setVisible(on);button.setArrowType(C.Qt.DownArrow if on else C.Qt.RightArrow)
             self.place()
@@ -312,14 +313,14 @@ class SketchPalette(OperationCard):
 
     def row(self, label, widget):
         index = self.rows.rowCount()
-        self.rows.addWidget(W.QLabel(label), index, 0)
+        self.rows.addWidget(W.QLabel(tr(label)), index, 0)
         self.rows.addWidget(widget, index, 1, C.Qt.AlignRight)
         self.rows.setRowMinimumHeight(index,25)
 
     def check(self, key, label, callback, tip):
         widget = W.QCheckBox()
         widget.setObjectName('SketchOption_'+key)
-        widget.setToolTip(tip)
+        widget.setToolTip(tr(tip))
         # clicked rather than stateChanged lets sync display a partial state safely.
         widget.clicked.connect(lambda on: self.change(callback, on))
         self.widgets[key] = widget
@@ -339,7 +340,7 @@ class SketchPalette(OperationCard):
         button.setObjectName('Palette_'+command)
         button.setIcon(icons.command_icon(command, picture, True))
         button.setIconSize(C.QSize(18, 18));button.setFixedSize(28, 26)
-        button.setToolTip(tip)
+        button.setToolTip(tr(tip))
         button.clicked.connect(lambda: Gui.runCommand(command))
         self.widgets[command] = button
         return button
@@ -409,10 +410,10 @@ class SketchPalette(OperationCard):
         errors = self.sketch.ConflictingConstraints or self.sketch.RedundantConstraints or self.sketch.MalformedConstraints or self.sketch.PartiallyRedundantConstraints or self.sketch.DoF < 0
         self.problem.setVisible(bool(errors))
         if errors:
-            text = 'Konfliktní nebo nadbytečné vazby — otevřít Sketcher details'
+            text = tr("Conflicting or redundant constraints — open Sketcher details")
             color = '#ffb06a'
         else:
-            text = 'Empty Sketch' if not self.sketch.GeometryCount else 'Fully Constrained' if self.sketch.DoF == 0 else '%s degrees of freedom' % self.sketch.DoF
+            text = tr('Empty Sketch') if not self.sketch.GeometryCount else tr('Fully Constrained') if self.sketch.DoF == 0 else tr('%s degrees of freedom') % self.sketch.DoF
             color = '#77d49b' if self.sketch.DoF == 0 else '#c2cede'
         self.status.setText(text);self.status.setStyleSheet('color:%s;padding:5px 0;' % color)
         self.widgets['find'].setEnabled(self.sketch.DoF > 0 and not errors)
@@ -420,8 +421,8 @@ class SketchPalette(OperationCard):
         self.profiles.update(show_profiles)
         self.presentation.update()
         self.profile_status.setVisible(show_profiles)
-        self.profile_status.setText('Profiles unavailable — '+self.profiles.error if self.profiles.error else
-                                   '%s closed profiles' % self.profiles.count)
+        self.profile_status.setText(tr("Profiles unavailable — ")+self.profiles.error if self.profiles.error else
+                                   tr("%s closed profiles") % self.profiles.count)
         self.profile_status.setStyleSheet('color:#9bbbd5;padding-bottom:4px;')
         self.place()
 

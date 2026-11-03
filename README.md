@@ -24,7 +24,7 @@ it does not promise complete Autodesk Fusion feature parity or F3D compatibility
 | Qt / Python bindings | Qt 6.8.3, PySide6 |
 | Operating system | Windows 11, 64-bit |
 | Main workbenches | Part Design and Sketcher |
-| FusionFlow | 0.20.0, first public distribution |
+| FusionFlow | 0.21.0, English / Czech interface |
 
 FreeCAD 0.21, 1.0, Qt 5 builds, development builds and other operating systems have
 not been validated. Some helpers use FreeCAD 1.1 APIs and PySide6 directly, so a
@@ -62,6 +62,12 @@ Mod/
 
 Do not copy the repository itself as one workbench folder. Direct Addon Manager
 installation of this repository is not currently supported.
+
+## Interface language
+
+Choose **English** or **Czech** in FreeCAD’s **Edit → Preferences → General → Language**, then save your work and restart FreeCAD. FusionFlow uses that language for its ribbon, task cards, browser groups, sketch palette, measurements and diagnostics. A full restart keeps an open operation in one language.
+
+Document and object names, parameter values, command IDs and saved geometry stay unchanged. Object labels you enter yourself are always displayed literally. Other FreeCAD languages fall back to English for FusionFlow.
 
 ## What it adds
 
@@ -109,7 +115,7 @@ and selection. Middle-drag pans; Shift + middle-drag orbits.
   geometry; they are not certified metrology or manufacturing checks.
 - Topology changes can invalidate referenced edges or faces. Inspect errors and repair
   affected features instead of assuming a shape that still draws is valid.
-- Some user-facing tooltips and messages are in Czech. Full localisation is unfinished.
+- FusionFlow supports English and Czech. Other FreeCAD languages use the English FusionFlow interface. Third-party workbenches retain their own translations.
 - Documents containing FusionFlow Python-backed profiles, construction features or
   analyses need this add-on to restore and recompute those features. Use STEP for a
   geometry-only handoff; STEP does not preserve parametric history.

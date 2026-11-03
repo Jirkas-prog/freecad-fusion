@@ -1,4 +1,5 @@
 """Live sketch-profile shading, calculated by FreeCAD's own internal-face builder."""
+from fusionflow_i18n import tr
 import FreeCAD as App
 import Part
 import Sketcher
@@ -105,7 +106,7 @@ class SketchProfiles:
         self.dirty = False
         try:
             if self.sketch.ConflictingConstraints or self.sketch.MalformedConstraints or self.sketch.DoF < 0:
-                raise ValueError('Nejprve opravte konfliktní vazby skici.')
+                raise ValueError(tr("Fix conflicting sketch constraints first."))
             changed = self.builder.update(self.sketch)
             placement = App.Placement(Gui.editDocument().EditingTransform)
             if changed or self.placement is None or not placement.isSame(self.placement,1e-9):

@@ -1,4 +1,5 @@
 """Viewport grid and a compact view bar. No objects are added to the model."""
+from fusionflow_i18n import tr
 import math
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -146,7 +147,7 @@ class ViewGrid:
         if not visible:
             self.signature=None
             self.bar.scale.setText(App.Units.Quantity(1,App.Units.Length).getUserPreferred()[2] if sketch else '')
-            if sketch:self.bar.scale.setToolTip('Jednotky souřadnic skici')
+            if sketch:self.bar.scale.setToolTip(tr("Sketch coordinate units"))
             return
         camera = self.view.getCameraNode()
         size = self.view.getSize()
@@ -177,7 +178,7 @@ class ViewGrid:
             self.color.rgb.setValues(colors)
             self.lines.numVertices.setValues([4]*(len(points)//4))
         self.bar.scale.setText(App.Units.Quantity(major,App.Units.Length).UserString)
-        self.bar.scale.setToolTip('Rozteč hlavních čar · '+('YZ','XZ','XY')[self.normal])
+        self.bar.scale.setToolTip(tr("Major-line spacing · ")+('YZ','XZ','XY')[self.normal])
 
     def close(self,view_destroyed=False):
         if self.closed:
@@ -205,13 +206,13 @@ class ViewBar(W.QFrame):
           #FusionViewBar QToolButton:hover {background:#52677e;}
           #FusionViewBar QLabel {background:transparent;color:#bac7d7;font:10px "Segoe UI";padding:0 5px;}''')
         layout=W.QHBoxLayout(self);layout.setContentsMargins(3,1,3,1);layout.setSpacing(2)
-        for picture,tip,callback in [('view_home','Home / Izometrický pohled',self.home),('view_fit','Fit / Celý model',lambda:Gui.runCommand('Std_ViewFitAll'))]:
+        for picture,tip,callback in [('view_home',tr("Home / Isometric view"),self.home),('view_fit',tr("Fit / Entire model"),lambda:Gui.runCommand('Std_ViewFitAll'))]:
             button=self.button(picture,tip);button.clicked.connect(callback);layout.addWidget(button)
-        self.display_button=self.button('view_display','Display Settings / Nastavení pohledu')
+        self.display_button=self.button('view_display',tr("Display settings"))
         self.display_menu=W.QMenu(self);self.display_menu.aboutToShow.connect(self.display_menu_items)
         self.display_button.setMenu(self.display_menu);self.display_button.setPopupMode(W.QToolButton.InstantPopup)
         layout.addWidget(self.display_button)
-        self.grid_button=self.button('view_grid','Grid / Mřížka a její nastavení')
+        self.grid_button=self.button('view_grid',tr("Grid and grid settings"))
         self.grid_menu=W.QMenu(self);self.grid_menu.aboutToShow.connect(self.grid_menu_items)
         self.grid_button.setMenu(self.grid_menu);self.grid_button.setPopupMode(W.QToolButton.InstantPopup)
         layout.addWidget(self.grid_button)
@@ -234,7 +235,7 @@ class ViewBar(W.QFrame):
         self.grid.view.viewAxonometric();self.grid.view.fitAll()
 
     def checked_action(self,menu,text,checked,callback):
-        action=menu.addAction(text);action.setCheckable(True);action.setChecked(checked);action.triggered.connect(callback)
+        action=menu.addAction(tr(text));action.setCheckable(True);action.setChecked(checked);action.triggered.connect(callback)
         return action
 
     def set_preference(self,key,value):
@@ -250,12 +251,12 @@ class ViewBar(W.QFrame):
             self.checked_action(menu,'Sketch Grid',sketch.ShowGrid,lambda on:setattr(sketch,'ShowGrid',on))
             self.checked_action(menu,'Adaptive',sketch.GridAuto,lambda on:setattr(sketch,'GridAuto',on))
             menu.addSeparator()
-            info=menu.addAction('Další volby: Sketcher → Preferences');info.setEnabled(False)
+            info=menu.addAction(tr("More options: Sketcher → Preferences"));info.setEnabled(False)
             return
         self.checked_action(menu,'Layout Grid',pref.GetBool('LayoutGrid',True),lambda on:self.set_preference('LayoutGrid',on))
         self.checked_action(menu,'Layout Grid Lock',pref.GetString('GridPlane','Auto')!='Auto',lambda on:self.set_preference('GridPlane',('YZ','XZ','XY')[self.grid.normal] if on else 'Auto'))
         self.checked_action(menu,'Origin Axes',pref.GetBool('GridAxes',True),lambda on:self.set_preference('GridAxes',on))
-        menu.addSeparator();menu.addAction('Grid Settings…',self.settings)
+        menu.addSeparator();menu.addAction(tr('Grid Settings…'),self.settings)
 
     def display_menu_items(self):
         menu=self.display_menu;menu.clear()
@@ -268,20 +269,22 @@ class ViewBar(W.QFrame):
             if action:menu.addAction(action)
         menu.addSeparator()
         for label,command in [('Top','Std_ViewTop'),('Front','Std_ViewFront'),('Right','Std_ViewRight')]:
-            menu.addAction(label,lambda cmd=command:Gui.runCommand(cmd))
+            menu.addAction(tr(label),lambda cmd=command:Gui.runCommand(cmd))
 
     def settings(self):
         pref=App.ParamGet(PREF)
-        dialog=W.QDialog(self);dialog.setWindowTitle('GRID SETTINGS');dialog.setMinimumWidth(310)
+        dialog=W.QDialog(self);dialog.setWindowTitle(tr("GRID SETTINGS"));dialog.setMinimumWidth(310)
         layout=W.QFormLayout(dialog)
-        adaptive=W.QCheckBox('Adaptive');adaptive.setChecked(pref.GetBool('GridAdaptive',True));layout.addRow(adaptive)
-        spacing=W.QDoubleSpinBox();spacing.setDecimals(6);spacing.setRange(.000001,1e9);spacing.setSuffix(' mm');spacing.setValue(pref.GetFloat('GridMajor',10));layout.addRow('Major grid spacing',spacing)
+        adaptive=W.QCheckBox(tr("Adaptive"));adaptive.setChecked(pref.GetBool('GridAdaptive',True));layout.addRow(adaptive)
+        spacing=W.QDoubleSpinBox();spacing.setDecimals(6);spacing.setRange(.000001,1e9);spacing.setSuffix(' mm');spacing.setValue(pref.GetFloat('GridMajor',10));layout.addRow(tr("Major grid spacing"),spacing)
         spacing.setEnabled(not adaptive.isChecked());adaptive.toggled.connect(lambda on:spacing.setEnabled(not on))
-        divisions=W.QSpinBox();divisions.setRange(2,20);divisions.setValue(pref.GetInt('GridDivisions',5));layout.addRow('Subdivisions',divisions)
-        plane=W.QComboBox();plane.addItems(['Auto','XY','XZ','YZ']);plane.setCurrentText(pref.GetString('GridPlane','Auto'));layout.addRow('Plane',plane)
+        divisions=W.QSpinBox();divisions.setRange(2,20);divisions.setValue(pref.GetInt('GridDivisions',5));layout.addRow(tr("Subdivisions"),divisions)
+        from fusionflow_ui import combo, selected_name
+        plane=combo([(s,s) for s in ('Auto','XY','XZ','YZ')], translate_labels=True)
+        selected_name(plane,pref.GetString('GridPlane','Auto'));layout.addRow(tr("Plane"),plane)
         buttons=W.QDialogButtonBox(W.QDialogButtonBox.Ok|W.QDialogButtonBox.Cancel);buttons.accepted.connect(dialog.accept);buttons.rejected.connect(dialog.reject);layout.addRow(buttons)
         if dialog.exec()==W.QDialog.Accepted:
-            pref.SetBool('GridAdaptive',adaptive.isChecked());pref.SetFloat('GridMajor',spacing.value());pref.SetInt('GridDivisions',divisions.value());pref.SetString('GridPlane',plane.currentText())
+            pref.SetBool('GridAdaptive',adaptive.isChecked());pref.SetFloat('GridMajor',spacing.value());pref.SetInt('GridDivisions',divisions.value());pref.SetString('GridPlane',plane.currentData())
             self.grid.signature=None;self.grid.update()
         dialog.deleteLater()
 

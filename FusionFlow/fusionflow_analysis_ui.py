@@ -1,4 +1,5 @@
 """Fusion-style analysis cards reusing the existing transactional panel."""
+from fusionflow_i18n import tr
 import json
 import FreeCADGui as Gui
 from PySide import QtCore as C, QtWidgets as W
@@ -41,24 +42,24 @@ class SectionPanel(Panel):
                     self.references=[reference];settings['plane']='Selection';break
             # A section must not hide geometry before its reference is picked.
             if not self.references:settings['plane']='Selection'
-        self.plane=self.row('Plane',combo([(s,s) for s in ('XY','XZ','YZ','Selection')]))
+        self.plane=self.row(tr("Plane"),combo([(s,s) for s in ('XY','XZ','YZ','Selection')], translate_labels=True))
         selected_name(self.plane,settings['plane'])
         self.picking=not obj and not self.references
         self.pick=PickField(self.pick_reference,self.clear_reference)
-        self.fields.addRow('Reference',self.pick)
+        self.fields.addRow(tr("Reference"),self.pick)
         self.reference_label=W.QLabel();self.reference_label.setWordWrap(True);self.fields.addRow(self.reference_label)
-        self.pick_hint=W.QLabel('Vyber rovinnou stěnu nebo konstrukční rovinu kliknutím v modelu či browseru.')
+        self.pick_hint=W.QLabel(tr("Select a planar face or construction plane in the model or browser."))
         self.pick_hint.setWordWrap(True);self.fields.addRow(self.pick_hint)
-        self.offset=self.row('Distance',number(settings['offset']))
-        self.angle_x=self.row('Angle X',number(settings['angle_x'],True))
-        self.angle_y=self.row('Angle Y',number(settings['angle_y'],True))
+        self.offset=self.row(tr("Distance"),number(settings['offset']))
+        self.angle_x=self.row(tr("Angle X"),number(settings['angle_x'],True))
+        self.angle_y=self.row(tr("Angle Y"),number(settings['angle_y'],True))
         for field,key in ((self.angle_x,'angle_x'),(self.angle_y,'angle_y')):field.setRange(-360,360);field.setValue(settings[key])
-        self.reference_axes=self.row('Angle axes',W.QCheckBox('Follow plane axes'))
+        self.reference_axes=self.row(tr("Angle axes"),W.QCheckBox(tr("Follow plane axes")))
         self.reference_axes.setChecked(settings['reference_axes'])
-        self.reference_axes.setToolTip('Úhly X/Y se vztahují k osám vybrané roviny. Vypnutí zachová orientaci používanou staršími řezy.')
-        self.flip=self.row('Flip',W.QCheckBox('Reverse side'));self.flip.setChecked(settings['flip'])
-        self.caps=self.row('Section',W.QCheckBox('Show caps'));self.caps.setChecked(settings['caps'])
-        self.hatch=self.row('',W.QCheckBox('Hatch'));self.hatch.setChecked(settings['hatch'])
+        self.reference_axes.setToolTip(tr("X/Y angles are relative to the selected plane axes. Disabling this preserves the orientation used by older sections."))
+        self.flip=self.row(tr("Flip"),W.QCheckBox(tr("Reverse side")));self.flip.setChecked(settings['flip'])
+        self.caps=self.row(tr("Section"),W.QCheckBox(tr("Show caps")));self.caps.setChecked(settings['caps'])
+        self.hatch=self.row('',W.QCheckBox(tr("Hatch")));self.hatch.setChecked(settings['hatch'])
         self.result_label=W.QLabel();self.result_label.setWordWrap(True);self.fields.addRow(self.result_label)
         from fusionflow_dragger import SectionHandle
         self.handles=SectionHandle(self)
@@ -123,7 +124,7 @@ class SectionPanel(Panel):
         obj.Settings=json.dumps(settings);obj.References=references
         obj.ViewObject.Visibility=True
         self.doc.recompute();graphics.manager.dirty=True;graphics.manager.update()
-        if obj.Result.startswith('Analýza:'):raise ValueError(obj.Result)
+        if obj.Result.startswith(tr("Analysis:")):raise ValueError(obj.Result)
         self.result_label.setText(obj.Result)
         return obj
 
@@ -156,21 +157,21 @@ class AnalysisPanel(Panel):
         settings=dict(DEFAULTS,**json.loads(obj.Settings)) if obj else dict(DEFAULTS)
         if kind=='Accessibility' and not obj:settings['quality']=4
         if kind=='MeshGroups' and not obj:settings['limit']=.01
-        select=W.QPushButton('Use selection');select.clicked.connect(self.use_selection)
-        self.fields.addRow('Objects',select)
+        select=W.QPushButton(tr("Use selection"));select.clicked.connect(self.use_selection)
+        self.fields.addRow(tr("Objects"),select)
         self.reference_label=W.QLabel();self.reference_label.setWordWrap(True);self.fields.addRow(self.reference_label)
-        self.direction=self.row('Direction',combo([(label,axis) for label,axis in [('+X',[1,0,0]),('-X',[-1,0,0]),('+Y',[0,1,0]),('-Y',[0,-1,0]),('+Z',[0,0,1]),('-Z',[0,0,-1])]]))
+        self.direction=self.row(tr("Direction"),combo([(label,axis) for label,axis in [('+X',[1,0,0]),('-X',[-1,0,0]),('+Y',[0,1,0]),('-Y',[0,-1,0]),('+Z',[0,0,1]),('-Z',[0,0,-1])]], translate_labels=True))
         selected_name(self.direction,settings['direction'])
-        self.quality=self.row('Quality',combo([('Coarse · 4',4),('Medium · 12',12),('Fine · 24',24)]));selected_name(self.quality,settings['quality'])
-        self.count=self.row('Count',W.QSpinBox());self.count.setRange(2,60);self.count.setValue(settings['count'])
-        self.scale=self.row('Scale',number(settings['scale']));self.scale.setSuffix('');self.scale.setMinimum(.001)
-        self.limit=self.row('Angle' if kind=='Draft' else 'Tolerance' if kind=='MeshGroups' else 'Radius limit',number(settings['limit'],kind=='Draft'));self.limit.setMinimum(.001)
-        self.curvature=self.row('Curvature',combo([(s,s) for s in ('Gaussian','Minimum','Maximum')]));selected_name(self.curvature,settings['curvature'])
-        self.iso=self.row('Direction',combo([(s,s) for s in ('UV','U','V')]));selected_name(self.iso,settings['iso'])
-        self.density=self.row('Density',number(settings['density']));self.density.setSuffix(' kg/m³');self.density.setMinimum(0)
-        self.density.setToolTip('0: pouze objemový centroid. Kladná hustota se použije stejně na všechna tělesa.')
-        self.stripes=self.row('Stripes',W.QSpinBox());self.stripes.setRange(2,60);self.stripes.setValue(settings['stripes'])
-        self.rotation=self.row('Rotation',number(settings['rotation'],True))
+        self.quality=self.row('Quality',combo([('Coarse · 4',4),('Medium · 12',12),('Fine · 24',24)], translate_labels=True));selected_name(self.quality,settings['quality'])
+        self.count=self.row(tr("Count"),W.QSpinBox());self.count.setRange(2,60);self.count.setValue(settings['count'])
+        self.scale=self.row(tr("Scale"),number(settings['scale']));self.scale.setSuffix('');self.scale.setMinimum(.001)
+        self.limit=self.row(tr("Angle") if kind=='Draft' else tr("Tolerance") if kind=='MeshGroups' else tr("Radius limit"),number(settings['limit'],kind=='Draft'));self.limit.setMinimum(.001)
+        self.curvature=self.row(tr("Curvature"),combo([(s,s) for s in ('Gaussian','Minimum','Maximum')], translate_labels=True));selected_name(self.curvature,settings['curvature'])
+        self.iso=self.row(tr("Direction"),combo([(s,s) for s in ('UV','U','V')], translate_labels=True));selected_name(self.iso,settings['iso'])
+        self.density=self.row(tr("Density"),number(settings['density']));self.density.setSuffix(' kg/m³');self.density.setMinimum(0)
+        self.density.setToolTip(tr("0: volume centroid only. A positive density applies equally to all bodies."))
+        self.stripes=self.row(tr("Stripes"),W.QSpinBox());self.stripes.setRange(2,60);self.stripes.setValue(settings['stripes'])
+        self.rotation=self.row(tr("Rotation"),number(settings['rotation'],True))
         self.rotation.setRange(-360,360);self.rotation.setValue(settings['rotation'])
         conditions={self.direction:kind in ('Draft','Accessibility'),self.quality:kind in ('CurvatureMap','Draft','Accessibility','MinimumRadius','Zebra','Environment'),
                     self.count:kind in ('CurvatureComb','Isocurve'),self.scale:kind in ('CurvatureComb','CurvatureMap'),
@@ -181,11 +182,11 @@ class AnalysisPanel(Panel):
             legend=W.QWidget();legend.setFixedHeight(12)
             legend.setStyleSheet('border:1px solid #7c8898;background:qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #3359d9,stop:.25 #38bacf,stop:.5 #5cc46b,stop:.75 #f5cc3d,stop:1 #eb3b36);')
             self.fields.addRow(legend)
-            label=W.QLabel('− limit                 0                 + limit' if kind=='Draft' else '−1/Scale               0               +1/Scale')
+            label=W.QLabel(tr("− limit                 0                 + limit") if kind=='Draft' else tr("−1/Scale               0               +1/Scale"))
             label.setAlignment(C.Qt.AlignCenter);self.fields.addRow(label)
         self.output=W.QPlainTextEdit();self.output.setReadOnly(True);self.output.setMinimumHeight(100);self.output.setMaximumHeight(150)
         self.fields.addRow(self.output)
-        copy=W.QPushButton('Copy results');copy.clicked.connect(lambda:W.QApplication.clipboard().setText(self.output.toPlainText()));self.fields.addRow(copy)
+        copy=W.QPushButton(tr("Copy results"));copy.clicked.connect(lambda:W.QApplication.clipboard().setText(self.output.toPlainText()));self.fields.addRow(copy)
         self.schedule()
 
     def selection_references(self):
@@ -201,7 +202,7 @@ class AnalysisPanel(Panel):
     def use_selection(self):
         refs=self.selection_references()
         if refs:self.references=refs;self.schedule()
-        else:self.message.setText('Vyber geometrii v modelu nebo browseru; Ctrl přidá další výběr.');self.message.show()
+        else:self.message.setText(tr("Select geometry in the model or browser; Ctrl adds to the selection."));self.message.show()
 
     def build(self):
         settings=dict(direction=self.direction.currentData(),quality=self.quality.currentData(),count=self.count.value(),
@@ -212,7 +213,7 @@ class AnalysisPanel(Panel):
         obj.Label=LABELS[self.kind] if not self.edit_name else obj.Label
         obj.Settings=json.dumps(settings);obj.References=self.references;obj.ViewObject.Visibility=True
         self.doc.recompute();graphics.manager.dirty=True;graphics.manager.update()
-        if obj.Result.startswith('Analýza:'):raise ValueError(obj.Result)
+        if obj.Result.startswith(tr("Analysis:")):raise ValueError(obj.Result)
         self.output.setPlainText(obj.Result)
         return obj
 

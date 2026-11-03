@@ -1,4 +1,5 @@
 """Document navigation without changing the saved model."""
+from fusionflow_i18n import tr
 import FreeCAD as App
 import FreeCADGui as Gui
 from PySide import QtCore as C, QtWidgets as W
@@ -9,9 +10,9 @@ import fusionflow_icons as icons
 def show():
     doc=App.ActiveDocument
     if not doc:return
-    dialog=W.QDialog(Gui.getMainWindow());dialog.setWindowTitle('NAVIGATOR');dialog.resize(480,470)
-    layout=W.QVBoxLayout(dialog);search=W.QLineEdit();search.setPlaceholderText('Search objects…');layout.addWidget(search)
-    tree=W.QTreeWidget();tree.setHeaderLabels(['Object','Type']);layout.addWidget(tree)
+    dialog=W.QDialog(Gui.getMainWindow());dialog.setWindowTitle(tr("NAVIGATOR"));dialog.resize(480,470)
+    layout=W.QVBoxLayout(dialog);search=W.QLineEdit();search.setPlaceholderText(tr("Search objects…"));layout.addWidget(search)
+    tree=W.QTreeWidget();tree.setHeaderLabels([tr("Object"),tr("Type")]);layout.addWidget(tree)
     for obj in doc.Objects:
         row=W.QTreeWidgetItem(tree,[obj.Label,obj.TypeId]);row.setData(0,C.Qt.UserRole,inspect.key(obj))
         row.setIcon(0,icons.feature_icon(obj));row.setToolTip(0,inspect.tooltip(obj))
@@ -25,7 +26,7 @@ def show():
     for title,callback in [('Find in model',lambda:inspect.reveal(selected()) if selected() else None),
                            ('Edit',lambda:inspect.edit_diagnostic(selected()) if selected() else None),
                            ('Close',dialog.close)]:
-        button=W.QPushButton(title);button.clicked.connect(callback);buttons.addWidget(button)
+        button=W.QPushButton(tr(title));button.clicked.connect(callback);buttons.addWidget(button)
     tree.itemDoubleClicked.connect(lambda *_:inspect.reveal(selected()))
     dialog.setAttribute(C.Qt.WA_DeleteOnClose);dialog.show()
 
@@ -36,10 +37,8 @@ def history():
 
 
 def sustainability():
-    W.QMessageBox.information(Gui.getMainWindow(),'Sustainability Insights',
-        'Tento nástroj Fusion využívá údaje o materiálu, výrobě a emisní databázi. '
-        'V místní instalaci tyto podklady nemáme, proto zde uhlíkovou stopu neodhadujeme. '
-        'Objem a hmotnost při zadané hustotě získáš přes Inspect → Center of Mass.')
+    W.QMessageBox.information(Gui.getMainWindow(),tr("Sustainability Insights"),
+        tr("This Fusion tool uses material, manufacturing and emissions-database information. Those inputs are unavailable in this local installation, so no carbon footprint is estimated here. Use Inspect → Center of Mass for volume and mass at a specified density."))
 
 
 def install():

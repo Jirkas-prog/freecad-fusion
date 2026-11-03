@@ -1,4 +1,5 @@
 """Fusion-like commands producing only native FreeCAD Part Design objects."""
+from fusionflow_i18n import tr
 import FreeCAD as App
 import Part
 
@@ -35,7 +36,7 @@ def check(feature, allow_empty=False):
     if 'Invalid' in feature.State or feature.Shape.isNull():
         raise ValueError(feature.getStatusString())
     if not feature.Shape.isValid() or (not feature.Shape.Solids and not allow_empty):
-        raise ValueError('Výsledek není platné objemové těleso. Zkontroluj profil, směr a rozměry.')
+        raise ValueError(tr("The result is not a valid solid. Check the profile, direction and dimensions."))
     return feature
 
 
@@ -44,22 +45,22 @@ def resolve_profile(source, regions):
     if source.TypeId == 'PartDesign::Body':
         source = source.Tip
     if not source:
-        raise ValueError('Vyber oblast skici nebo rovinnou stěnu.')
+        raise ValueError(tr("Select a sketch region or planar face."))
     if source.TypeId == 'Sketcher::SketchObject':
         source.MakeInternals = True
         source.Document.recompute()
         if not regions or any(not isinstance(i, int) or i < 1 or i > len(source.InternalShape.Faces) for i in regions):
-            raise ValueError('Vyber alespoň jednu uzavřenou oblast skici.')
+            raise ValueError(tr("Select at least one closed sketch region."))
         return source, ['InternalFace%d' % i for i in regions], source.getGlobalPlacement().Rotation.multVec(App.Vector(0, 0, 1))
     if not regions or any(not isinstance(n, str) or not n.startswith('Face') or not n[4:].isdigit() for n in regions):
-        raise ValueError('Vyber rovinnou stěnu tělesa.')
+        raise ValueError(tr("Select a planar face of a body."))
     faces = [source.Shape.getElement(n) for n in regions]
     if any(not isinstance(f.Surface, Part.Plane) for f in faces):
-        raise ValueError('Extrude vyžaduje rovinnou stěnu. Zakřivenou stěnu nelze vysunout jako rovinný profil.')
+        raise ValueError(tr("Extrude requires a planar face. A curved face cannot be extruded as a planar profile."))
     normal = faces[0].normalAt(0, 0)
     origin = faces[0].CenterOfMass
     if any(normal.dot(f.normalAt(0, 0)) < 1-1e-7 or abs(normal.dot(f.CenterOfMass-origin)) > 1e-7 for f in faces[1:]):
-        raise ValueError('Vybrané stěny musí ležet ve stejné rovině a mít stejný směr.')
+        raise ValueError(tr("Selected faces must lie in the same plane and point in the same direction."))
     # Shape already includes the feature Placement; add only its parent transform.
     parent_rotation = source.getGlobalPlacement().Rotation * source.Placement.Rotation.inverted()
     return source, list(regions), parent_rotation.multVec(normal)
@@ -142,19 +143,19 @@ def extrude(sketch, regions, operation='New body', target=None, length=10,
     doc = sketch.Document
     is_sketch = sketch.TypeId == 'Sketcher::SketchObject'
     if operation not in ('New body', 'Join', 'Cut', 'Intersect'):
-        raise ValueError('Neznámá operace.')
+        raise ValueError(tr("Unknown operation."))
     if operation != 'New body' and (not target or target.TypeId != 'PartDesign::Body'):
-        raise ValueError('Vyber cílové těleso.')
+        raise ValueError(tr("Select a target body."))
     if target and target.Document != doc:
-        raise ValueError('Těleso a profil musí být ve stejném dokumentu.')
+        raise ValueError(tr("The body and profile must be in the same document."))
     if extent == 'Distance' and (length <= 0 or (direction == 'Two sides' and length2 <= 0)):
-        raise ValueError('Vzdálenost musí být kladná. Směr otoč volbou Reverse.')
+        raise ValueError(tr("Distance must be positive. Use Reverse to flip the direction."))
     if extent == 'To object' and not end_face:
-        raise ValueError('Vyber koncovou plochu a stiskni Použít vybranou plochu.')
+        raise ValueError(tr("Select an end face and click Use selected face."))
     if extent == 'All' and operation != 'Cut':
-        raise ValueError('All / Skrz vše je k dispozici pro odebrání Cut.')
+        raise ValueError(tr("Through All is available for the Cut operation."))
     if extent != 'Distance' and direction != 'One side':
-        raise ValueError('Pro To object / All zvol One side.')
+        raise ValueError(tr("Choose One Side for To Object / Through All."))
     if operation == 'New body':
         owner = body_of(sketch)
         target = owner if owner and owner.TypeId == 'PartDesign::Body' and not owner.Tip else doc.addObject('PartDesign::Body', 'Body')
@@ -239,9 +240,9 @@ def cut_all(source, regions, targets=None, **options):
     else:
         targets = list(dict.fromkeys(targets))
         if not targets:
-            raise ValueError('Nejsou vybraná žádná tělesa k odebrání. Zaškrtni je v Objects To Cut.')
+            raise ValueError(tr("No bodies selected for cutting. Check them in Objects To Cut."))
         if any(not o or o.Document != doc or o.TypeId != 'PartDesign::Body' or not o.Tip or not o.Shape.Solids for o in targets):
-            raise ValueError('Cíle řezu musí být objemová Part Design tělesa ve stejném dokumentu.')
+            raise ValueError(tr("Cut targets must be solid Part Design bodies in the same document."))
     results = []
     for target in targets:
         old_tip = target.Tip
@@ -264,7 +265,7 @@ def cut_all(source, regions, targets=None, **options):
             doc.getObject(name).Visibility = visible
         doc.recompute()
     if not results:
-        raise ValueError('Vysunutí neprotíná žádné vybrané těleso. Změň výběr, vzdálenost nebo směr.')
+        raise ValueError(tr("The extrusion does not intersect any selected body. Change the selection, distance or direction."))
     from fusionflow_cut_history import remember_cut
     remember_cut(source, profiles, bases, targets, results, options)
     return results
@@ -272,16 +273,16 @@ def cut_all(source, regions, targets=None, **options):
 
 def combine(target, tools, operation='Join', keep=False):
     if not target or target.TypeId != 'PartDesign::Body' or not target.Tip:
-        raise ValueError('Vyber cílové Part Design těleso s objemem.')
+        raise ValueError(tr("Select a solid Part Design target body."))
     if not tools or target in tools:
-        raise ValueError('Vyber jiné nástrojové těleso.')
+        raise ValueError(tr("Select a different tool body."))
     if operation not in ('Join', 'Cut', 'Intersect'):
-        raise ValueError('Neznámá booleovská operace.')
+        raise ValueError(tr("Unknown Boolean operation."))
     for tool in tools:
         if tool.TypeId != 'PartDesign::Body' or tool.Document != target.Document or tool.Shape.isNull():
-            raise ValueError('Nástroj musí být objemové Part Design těleso ve stejném dokumentu.')
+            raise ValueError(tr("The tool must be a solid Part Design body in the same document."))
         if target in tool.OutListRecursive:
-            raise ValueError('Nástroj už závisí na cíli. Operace by vytvořila kruhovou závislost.')
+            raise ValueError(tr("The tool already depends on the target. This operation would create a circular dependency."))
     old_tip = target.Tip
     feature = target.newObject('PartDesign::Boolean', 'Combine')
     feature.Label = 'Combine · ' + operation

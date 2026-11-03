@@ -1,4 +1,5 @@
 """Transient Coin rendering for saved analysis objects; no model replacement."""
+from fusionflow_i18n import tr
 import json
 import math
 import FreeCAD as App
@@ -113,7 +114,7 @@ def section_node(objects, settings, references):
         for obj in objects:
             cap=section_caps(global_shape(obj),frame)
             if not cap.isNull():count+=1;area+=cap.Area
-    return clip,root,'Řez protíná %d těles · plocha %.3f mm²'%(count,area)
+    return clip,root,tr("Section intersects %d bodies · area %.3f mm²")%(count,area)
 
 
 class AnalysisView:
@@ -220,7 +221,7 @@ class Manager:
                     # clipping to it; the grid, cube and edit handles stay intact.
                     group=next((scene.getChild(i) for i in range(scene.getNumChildren())
                                 if str(scene.getChild(i).getName())=='ObjectGroup'),None)
-                    if group is None:raise ValueError('V tomto pohledu chybí skupina 3D modelu.')
+                    if group is None:raise ValueError(tr("This view has no 3D model group."))
                     wrapper=coin.SoSeparator();wrapper.addChild(clip);wrapper.addChild(group)
                     scene.replaceChild(group,wrapper);self.wrappers.append((scene,wrapper,group))
                     render_scene=wrapper
@@ -230,7 +231,7 @@ class Manager:
                 else:
                     refs=references[obj.Name]
                     if not refs:
-                        message='Analýza čeká na viditelnou referenční geometrii.'
+                        message=tr("Analysis is waiting for visible reference geometry.")
                         if obj.Result!=message:obj.Result=message
                         continue
                     root,result=analysis_node(obj.AnalysisType,refs,settings)
@@ -245,7 +246,7 @@ class Manager:
                             self.hidden.append((source,node,material))
                     if obj.Result!=result['text']:obj.Result=result['text']
             except Exception as error:
-                message='Analýza: '+str(error)
+                message=tr("Analysis: ")+str(error)
                 if obj.Result!=message:obj.Result=message
         self.dirty=False
 

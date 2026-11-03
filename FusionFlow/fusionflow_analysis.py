@@ -1,4 +1,5 @@
 """Non-destructive saved analyses; model solids remain native and untouched."""
+from fusionflow_i18n import tr
 import json
 import math
 import FreeCAD as App
@@ -50,7 +51,7 @@ def plane_frame(settings, references=()):
     normal = {'XY':App.Vector(0,0,1), 'XZ':App.Vector(0,-1,0), 'YZ':App.Vector(1,0,0)}.get(plane)
     if plane == 'Selection':
         if not references:
-            raise ValueError('Vyber rovinnou stěnu nebo konstrukční rovinu.')
+            raise ValueError(tr("Select a planar face or construction plane."))
         obj, subs = references[0]
         if is_datum_plane(obj):
             placement = obj.getGlobalPlacement()
@@ -58,16 +59,16 @@ def plane_frame(settings, references=()):
             if settings.get('reference_axes',False):rotation=placement.Rotation
         else:
             if not subs or not subs[0].startswith('Face'):
-                raise ValueError('Reference řezu musí být rovinná stěna nebo konstrukční rovina.')
+                raise ValueError(tr("The section reference must be a planar face or construction plane."))
             face = global_shape(obj).getElement(subs[0])
             if not isinstance(face.Surface, Part.Plane):
-                raise ValueError('Zakřivená stěna neurčuje jedinou rovinu. Vyber rovinnou stěnu.')
+                raise ValueError(tr("A curved face does not define a single plane. Select a planar face."))
             position, normal = face.CenterOfMass, face.normalAt(0,0)
             if settings.get('reference_axes',False):
                 x=face.Surface.tangent(0,0)[0]
                 rotation=App.Rotation(x,normal.cross(x),normal,'ZXY')
     if normal is None:
-        raise ValueError('Neznámá rovina řezu.')
+        raise ValueError(tr("Unknown section plane."))
     # Older saved sections contain no reference_axes key. Keep their exact
     # orientation until the user opts into the reference plane's local axes.
     if rotation is None:rotation = App.Rotation(App.Vector(0,0,1), normal)

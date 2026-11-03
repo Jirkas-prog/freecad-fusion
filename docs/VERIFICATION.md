@@ -1,4 +1,18 @@
-# Verification for FusionFlow 0.20.0
+# Verification
+
+## FusionFlow 0.21.0 — 2026-11-03
+
+Validated with FreeCAD 1.1.3, Python 3.11.14 and Qt 6.8.3 on Windows.
+
+- All 12 existing geometry regression scripts and the new catalog/language regression pass in isolated processes. The latter checks fixed messages, variable ribbon captions, formatting placeholders, fallback and session language.
+- The application starts on a fresh profile; the original generated-model smoke test passes.
+- Seven GUI scenarios pass separately in English and Czech: ribbon/workbench switching; literal document and object labels; extrusion with unchanged enum data, geometry, Undo and Redo; all 20 construction cards and cancellation; measurement and numeric clipboard values; analysis and section cards; native sketch editing and the sketch palette.
+- Test labels deliberately match interface words (`Cut`, `Select`, `Profile Plane`). They remain literal in both languages. No real user model is opened or changed.
+- Release packaging scans tracked source; the ZIP includes the Czech catalog and its published SHA-256 checksum.
+
+Run the language scenarios with `tools/test_gui.ps1 -FreeCAD <path-to-FreeCAD.exe> -Suite language -Language en` and again with `-Language cs`. The runner creates a separate disposable profile and configures its language before startup.
+
+## Original FusionFlow 0.20.0 verification
 
 Validated on 2026-10-20 using the official Windows FreeCAD 1.1.3 runtime,
 Python 3.11.14 and Qt 6.8.3. These are reproducible checks, not a claim that every
